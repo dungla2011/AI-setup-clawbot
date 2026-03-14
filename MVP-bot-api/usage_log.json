@@ -13,9 +13,16 @@
       "input_tokens": 758,
       "output_tokens": 223,
       "cost_usd": 0.000468
+    },
+    {
+      "timestamp": "2026-03-14T13:46:18.098695",
+      "model": "claude-3-haiku-20240307",
+      "input_tokens": 745,
+      "output_tokens": 53,
+      "cost_usd": 0.000253
     }
   ],
-  "total_input_tokens": 1503,
-  "total_output_tokens": 276,
-  "total_cost_usd": 0.00072075
+  "total_input_tokens": 2248,
+  "total_output_tokens": 329,
+  "total_cost_usd": 0.00097325
 }

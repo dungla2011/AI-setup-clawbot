@@ -1,13 +1,18 @@
 """
 Telegram Bot MVP với Claude API + Function Calling
 """
+import sys
+# Fix UTF-8 encoding on Windows terminal
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 import json
 import logging
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 from anthropic import Anthropic
-from usage_tracker import tracker
+from database import UsageStatsDB, ConversationDB, init_database
 
 # Debug: Print current working directory
 print("="*60)
@@ -44,6 +49,9 @@ if not api_key:
 print(f"✅ Creating Anthropic client with key...")
 client = Anthropic(api_key=api_key)
 print(f"✅ Anthropic client created successfully")
+
+# Initialize database
+init_database()
 
 # Get Claude model from environment
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-20250514")
@@ -137,7 +145,7 @@ def process_tool_call(tool_name, tool_input):
         return {"error": f"Unknown tool: {tool_name}"}
 
 # Main bot function
-def chat_with_claude(user_message, conversation_history=None):
+def chat_with_claude(user_message, conversation_history=None, conversation_id=None):
     """
     Chat với Claude, tự động gọi tools khi cần
     """
@@ -167,10 +175,11 @@ def chat_with_claude(user_message, conversation_history=None):
     
     # Track usage
     if hasattr(response, 'usage'):
-        tracker.log_request(
+        UsageStatsDB.log_request(
             model=CLAUDE_MODEL,
             input_tokens=response.usage.input_tokens,
-            output_tokens=response.usage.output_tokens
+            output_tokens=response.usage.output_tokens,
+            conversation_id=conversation_id
         )
     
     # Process response
@@ -219,10 +228,11 @@ def chat_with_claude(user_message, conversation_history=None):
         
         # Track usage for follow-up
         if hasattr(response, 'usage'):
-            tracker.log_request(
+            UsageStatsDB.log_request(
                 model=CLAUDE_MODEL,
                 input_tokens=response.usage.input_tokens,
-                output_tokens=response.usage.output_tokens
+                output_tokens=response.usage.output_tokens,
+                conversation_id=conversation_id
             )
     
     # Extract final text response

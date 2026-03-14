@@ -28,15 +28,24 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
     
     def do_GET(self):
         """Override GET to inject API_URL into index.html"""
-        if self.path == '/' or self.path == '/index.html':
-            # Read index.html and inject API_URL from .env
+        # Strip query params for path comparison
+        clean_path = self.path.split('?')[0]
+        print(f"🔍 do_GET path='{self.path}' clean='{clean_path}'")
+        
+        if clean_path == '/' or clean_path == '/index.html' or clean_path == '/stats.html':
+            filename = 'stats.html' if clean_path == '/stats.html' else 'index.html'
+            # Read html file and inject API_URL from .env
             try:
-                with open('index.html', 'r', encoding='utf-8') as f:
+                with open(filename, 'r', encoding='utf-8') as f:
                     html_content = f.read()
                 
-                # Replace placeholder with actual API_URL
-                api_url = os.getenv("API_URL", "http://localhost:8000")
+                # Replace placeholders with values from .env
+                api_url = os.getenv("API_URL", "http://localhost:8100")
+                api_port = os.getenv("API_PORT", "8100")
+                print(f"🔌 Injecting API_URL='{api_url}' API_PORT='{api_port}' into {filename}")
+
                 html_content = html_content.replace('{{API_URL}}', api_url)
+                html_content = html_content.replace('{{API_PORT}}', api_port)
                 
                 self.send_response(200)
                 self.send_header('Content-type', 'text/html; charset=utf-8')
@@ -44,7 +53,7 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(html_content.encode('utf-8'))
                 return
             except Exception as e:
-                print(f"Error reading index.html: {e}")
+                print(f"Error reading {filename}: {e}")
         
         # Default behavior for other files
         super().do_GET()
@@ -56,9 +65,9 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     # Get config from .env
     web_host = os.getenv("WEB_HOST", "0.0.0.0")
-    web_port = int(os.getenv("WEB_PORT", "8080"))
-    web_url = os.getenv("WEB_URL", "http://localhost:8080")
-    api_url = os.getenv("API_URL", "http://localhost:8000")
+    web_port = int(os.getenv("WEB_PORT"))
+    web_url = os.getenv("WEB_URL")
+    api_url = os.getenv("API_URL")
     
     # Change to script directory
     script_dir = Path(__file__).parent

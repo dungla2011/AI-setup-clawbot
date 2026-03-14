@@ -13,58 +13,57 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background: #f0f0f0;
+            height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            overflow: hidden;
         }
 
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 100%;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border-radius: 0;
+            box-shadow: none;
             display: flex;
             flex-direction: column;
-            height: 80vh;
+            height: 100vh;
         }
 
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
-            border-radius: 12px 12px 0 0;
-            text-align: center;
+            padding: 0 16px;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 52px;
+            flex-shrink: 0;
         }
 
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 10px;
+        .header-title {
+            font-size: 17px;
+            font-weight: 700;
+            white-space: nowrap;
+            flex: 0 0 auto;
         }
 
         .nav-menu {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 15px;
+            gap: 4px;
+            flex: 1;
         }
 
         .nav-menu a {
             color: white;
             text-decoration: none;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 13px;
             transition: background 0.3s;
+            white-space: nowrap;
         }
 
         .nav-menu a:hover {
@@ -74,6 +73,39 @@
         .nav-menu a.active {
             background: rgba(255, 255, 255, 0.3);
             font-weight: bold;
+        }
+
+        .usage-stats {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-size: 12px;
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        .usage-stats .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .usage-stats .stat-sep {
+            opacity: 0.4;
+        }
+
+        .usage-stats .stat-label {
+            opacity: 0.75;
+            font-size: 11px;
+        }
+
+        .usage-stats .stat-value {
+            font-weight: 700;
+            font-size: 12px;
         }
 
         .chat-messages {
@@ -158,6 +190,10 @@
             font-weight: 600;
             transition: transform 0.2s;
         }
+        
+        button.new-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
 
         button:hover {
             transform: translateY(-2px);
@@ -221,12 +257,18 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 Bot MVP</h1>
-            <p>Hỏi về đơn hàng, doanh thu, trạng thái...</p>
+            <div class="header-title">🤖 Bot MVP</div>
             <div class="nav-menu">
                 <a href="index.html" class="active">💬 Chat</a>
                 <a href="stats.html">📊 Thống kê</a>
                 <a href="http://localhost:8100/docs" target="_blank">📖 API Docs</a>
+            </div>
+            <div class="usage-stats" id="usageStats">
+                <div class="stat-item"><span class="stat-label">Requests:</span><span class="stat-value" id="statRequests">—</span></div>
+                <span class="stat-sep">|</span>
+                <div class="stat-item"><span class="stat-label">Tokens:</span><span class="stat-value" id="statTokens">—</span></div>
+                <span class="stat-sep">|</span>
+                <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value" id="statCost">—</span></div>
             </div>
         </div>
 
@@ -248,7 +290,8 @@
                 placeholder="Nhập tin nhắn..." 
                 onkeyup="handleKeyUp(event)"
             >
-            <button onclick="sendMessage()" id="sendBtn">Gửi</button>
+            <button onclick="sendMessage()" id="sendBtn">📤 Gửi</button>
+            <button class="new-btn" onclick="startNewConversation()" title="Ctrl+N">🔄 Mới</button>
         </div>
         <div class="info">Conversation ID: <span id="convId">-</span></div>
     </div>
@@ -256,7 +299,8 @@
     <script>
         // API_URL injected from .env by web_server.py
         // Fallback to localhost if not injected
-        const API_URL = "{{API_URL}}".includes('{{') ? `http://${window.location.hostname}:8000` : "{{API_URL}}";
+        const API_PORT = "{{API_PORT}}".includes('{{') ? "8100" : "{{API_PORT}}";
+        const API_URL = "{{API_URL}}".includes('{{') ? `http://${window.location.hostname}:${API_PORT}` : "{{API_URL}}";
         
         let conversationId = null;
         let messageInput = document.getElementById("messageInput");
@@ -265,7 +309,7 @@
         let convIdSpan = document.getElementById("convId");
         
         console.log("🚀 API URL:", API_URL);
-        console.log("🌐 Hostname:", hostname);
+        console.log("🌐 Hostname:", window.location.hostname);
 
         function handleKeyUp(event) {
             if (event.key === "Enter" && !event.shiftKey) {
@@ -310,10 +354,19 @@
                 // Save conversation ID
                 conversationId = data.conversation_id;
                 convIdSpan.textContent = conversationId.substring(0, 8) + "...";
+                
+                // Save to localStorage
+                localStorage.setItem('lastConversationId', conversationId);
+                
+                // Update URL with conversation ID
+                window.history.replaceState({}, '', `?conv_id=${conversationId}`);
 
                 // Remove loading and add bot response
                 removeLoading(loadingId);
                 addMessage(data.bot_response, "bot");
+                
+                console.log("💬 Chat saved to conversation:", conversationId);
+                updateUsageStats();
 
             } catch (error) {
                 removeLoading(loadingId);
@@ -363,9 +416,114 @@
                 element.remove();
             }
         }
+        
+        // Fetch and display usage stats in the header
+        async function updateUsageStats() {
+            try {
+                const res = await fetch(`${API_URL}/stats`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const totalTokens = (data.total_input_tokens || 0) + (data.total_output_tokens || 0);
+                const cost = data.total_cost_usd || 0;
+                document.getElementById('statRequests').textContent = (data.total_requests || 0).toLocaleString();
+                document.getElementById('statTokens').textContent = totalTokens >= 1000
+                    ? (totalTokens / 1000).toFixed(1) + 'K'
+                    : totalTokens.toLocaleString();
+                document.getElementById('statCost').textContent = '$' + cost.toFixed(4);
+            } catch (e) {
+                console.warn('⚠️ Could not load stats:', e);
+            }
+        }
+
+        // Load conversation history from URL parameter, localStorage, or latest
+        async function loadConversationHistory() {
+            console.log("🔍 loadConversationHistory() started");
+            
+            // Check URL params for conversation_id
+            const urlParams = new URLSearchParams(window.location.search);
+            const convIdFromUrl = urlParams.get('conv_id');
+            
+            // Or check localStorage for recent conversation
+            let savedConvId = convIdFromUrl || localStorage.getItem('lastConversationId');
+            
+            // If no saved conversation, try to load the latest one
+            if (!savedConvId) {
+                try {
+                    console.log("📍 No saved conversation, loading latest...");
+                    console.log("🔗 Calling: " + API_URL + "/conversations/latest");
+                    const response = await fetch(`${API_URL}/conversations/latest`);
+                    console.log("📊 Response status:", response.status);
+                    if (response.ok) {
+                        const data = await response.json();
+                        savedConvId = data.conversation_id;
+                        console.log("✅ Loaded latest conversation:", savedConvId);
+                    } else {
+                        const text = await response.text();
+                        console.error("❌ Latest endpoint error:", response.status, text);
+                    }
+                } catch (error) {
+                    console.error("❌ Fetch error:", error);
+                }
+            } else {
+                console.log("✅ Using saved conversation:", savedConvId);
+            }
+            
+            // Load the conversation
+            if (savedConvId) {
+                try {
+                    console.log("🔗 Calling: " + API_URL + "/conversations/" + savedConvId);
+                    const response = await fetch(`${API_URL}/conversations/${savedConvId}`);
+                    console.log("📊 Response status:", response.status);
+                    if (response.ok) {
+                        const data = await response.json();
+                        conversationId = data.conversation_id;
+                        convIdSpan.textContent = conversationId.substring(0, 8) + "...";
+                        
+                        // Load all previous messages
+                        if (data.history && data.history.length > 0) {
+                            data.history.forEach(msg => {
+                                addMessage(msg.content, msg.role);
+                            });
+                            console.log("✅ Loaded conversation history:", data.history.length, "messages");
+                        } else {
+                            console.log("⚠️ No messages in history");
+                        }
+                    } else {
+                        const text = await response.text();
+                        console.error("❌ Conversation endpoint error:", response.status, text);
+                    }
+                } catch (error) {
+                    console.error("❌ Fetch error:", error);
+                }
+            } else {
+                console.log("⚠️ No conversation ID found");
+            }
+        }
+        
+        // Start new conversation
+        function startNewConversation() {
+            if (confirm("Bắt đầu cuộc hội thoại mới?")) {
+                conversationId = null;
+                messagesDiv.innerHTML = "";
+                localStorage.removeItem('lastConversationId');
+                window.history.replaceState({}, '', window.location.pathname);
+                messageInput.focus();
+                console.log("🔄 New conversation started");
+            }
+        }
+        
+        // Add keyboard shortcut Ctrl+N for new conversation
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                startNewConversation();
+            }
+        });
 
         // Focus on input when page loads
         window.addEventListener("load", () => {
+            loadConversationHistory();
+            updateUsageStats();
             messageInput.focus();
         });
     </script>

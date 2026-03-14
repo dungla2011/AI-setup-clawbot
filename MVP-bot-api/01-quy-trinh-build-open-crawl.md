@@ -94,7 +94,6 @@ Chi phí thấp
 - Anthropic SDK (Claude) ← tốt nhất cho tool use
 - httpx (gọi API readonly)
 - SQLite (memory + log)
-- Docker + VPS
 ```
 
 **Tổng thời gian build MVP:** 1-2 tuần nếu có kinh nghiệm Python cơ bản.
