@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  bot-api:
+    build: .
+    container_name: bot-mvp-api
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+    volumes:
+      - ./bot.py:/app/bot.py
+      - ./api.py:/app/api.py
+    command: python api.py
+    restart: unless-stopped
