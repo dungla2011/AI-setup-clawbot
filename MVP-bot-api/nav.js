@@ -54,7 +54,9 @@
         document.getElementById('statRequests').textContent = (d.total_requests || 0).toLocaleString();
         document.getElementById('statTokens').textContent =
           totalTokens >= 1000 ? (totalTokens / 1000).toFixed(1) + 'K' : totalTokens.toLocaleString();
-        document.getElementById('statCost').textContent = '$' + (d.total_cost_usd || 0).toFixed(4);
+        const usd = d.total_cost_usd || 0;
+        const vndK = (usd * 25000 / 1000).toFixed(1).replace('.', ',');
+        document.getElementById('statCost').textContent = '$' + usd.toFixed(4) + ' (~' + vndK + 'K đ)';
       } catch (e) { /* silently ignore network errors */ }
     }
 
