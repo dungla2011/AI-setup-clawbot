@@ -85,7 +85,11 @@ def chat_with_claude(user_message, conversation_history=None, conversation_id=No
     
     # System prompt with injected user memory
     system_prompt = build_system_prompt(user_memory)
-    
+
+    # Accumulate token usage across all API calls (incl. tool-use rounds)
+    _total_input = 0
+    _total_output = 0
+
     # Call Claude with tools
     response = client.messages.create(
         model=CLAUDE_MODEL,
@@ -97,6 +101,8 @@ def chat_with_claude(user_message, conversation_history=None, conversation_id=No
     
     # Track usage
     if hasattr(response, 'usage'):
+        _total_input += response.usage.input_tokens
+        _total_output += response.usage.output_tokens
         UsageStatsDB.log_request(
             model=CLAUDE_MODEL,
             input_tokens=response.usage.input_tokens,
@@ -150,6 +156,8 @@ def chat_with_claude(user_message, conversation_history=None, conversation_id=No
         
         # Track usage for follow-up
         if hasattr(response, 'usage'):
+            _total_input += response.usage.input_tokens
+            _total_output += response.usage.output_tokens
             UsageStatsDB.log_request(
                 model=CLAUDE_MODEL,
                 input_tokens=response.usage.input_tokens,
@@ -169,8 +177,13 @@ def chat_with_claude(user_message, conversation_history=None, conversation_id=No
         "role": "assistant",
         "content": final_response
     })
-    
-    return final_response, conversation_history
+
+    # Build usage summary for this full exchange (all tool-use rounds combined)
+    _pricing = UsageStatsDB.PRICING.get(CLAUDE_MODEL, {"input": 3.0, "output": 15.0})
+    _cost = (_total_input * _pricing["input"] + _total_output * _pricing["output"]) / 1_000_000
+    usage = {"input_tokens": _total_input, "output_tokens": _total_output, "cost_usd": round(_cost, 6)}
+
+    return final_response, conversation_history, usage
 
 
 if __name__ == "__main__":

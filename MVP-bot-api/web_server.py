@@ -74,9 +74,10 @@ if __name__ == "__main__":
     web_url = os.getenv("WEB_URL")
     api_url = os.getenv("API_URL")
     
-    # Change to script directory
+    # Change to web/ directory so static files are served from there
     script_dir = Path(__file__).parent
-    os.chdir(script_dir)
+    web_dir = script_dir / 'web'
+    os.chdir(web_dir)
     
     server_address = (web_host, web_port)
     httpd = HTTPServer(server_address, CORSRequestHandler)
@@ -87,7 +88,7 @@ if __name__ == "__main__":
     print(f"🌐 Web URL: {web_url}/index.html")
     print(f"🔌 Port: {web_port}")
     print(f"🤖 API URL: {api_url}")
-    print(f"📁 Directory: {script_dir}")
+    print(f"📁 Directory: {web_dir}")
     print(f"\n⚠️  Chắc chắn API server chạy trên {api_url}")
     print(f"{'='*50}")
     print(f"Nhấn Ctrl+C để tắt server\n")

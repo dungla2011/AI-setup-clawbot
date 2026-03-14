@@ -143,14 +143,19 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             })
         
         # Chat with Claude
-        bot_response, updated_history = chat_with_claude(
+        bot_response, updated_history, usage = chat_with_claude(
             user_message=user_message,
             conversation_history=conversation_history,
             conversation_id=conversation_id
         )
-        
-        # Save bot response to DB
-        ConversationDB.add_message(conversation_id, role="assistant", content=bot_response)
+
+        # Save bot response to DB (with per-message cost)
+        ConversationDB.add_message(
+            conversation_id, role="assistant", content=bot_response,
+            input_tokens=usage.get("input_tokens"),
+            output_tokens=usage.get("output_tokens"),
+            cost_usd=usage.get("cost_usd"),
+        )
         
         # Send response
         await update.message.reply_text(bot_response)

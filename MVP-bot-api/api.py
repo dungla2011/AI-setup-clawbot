@@ -75,6 +75,9 @@ class ChatResponse(BaseModel):
     conversation_id: str
     user_message: str
     bot_response: str
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    cost_usd: Optional[float] = None
     timestamp: str
 
 # Routes
@@ -132,12 +135,17 @@ async def chat(request: ChatRequest):
         ConversationDB.add_message(conv_id, role="user", content=request.message)
         
         # Get bot response (run sync function in thread to not block event loop)
-        bot_response, history = await asyncio.to_thread(
+        bot_response, history, usage = await asyncio.to_thread(
             chat_with_claude, request.message, history, conv_id, user_memory
         )
-        
-        # Save bot response to DB
-        ConversationDB.add_message(conv_id, role="assistant", content=bot_response)
+
+        # Save bot response to DB (with per-message cost)
+        ConversationDB.add_message(
+            conv_id, role="assistant", content=bot_response,
+            input_tokens=usage.get("input_tokens"),
+            output_tokens=usage.get("output_tokens"),
+            cost_usd=usage.get("cost_usd"),
+        )
         
         # Store conversation in memory (for backward compatibility)
         conversations[conv_id] = history
@@ -148,11 +156,14 @@ async def chat(request: ChatRequest):
             asyncio.create_task(update_user_memory_async(request.user_id, history))
         
         from datetime import datetime
-        print(f"   ✅ Chat response saved\n")
+        print(f"   ✅ Chat response saved | {usage.get('input_tokens',0)}in+{usage.get('output_tokens',0)}out = ${usage.get('cost_usd',0):.5f}\n")
         return ChatResponse(
             conversation_id=conv_id,
             user_message=request.message,
             bot_response=bot_response,
+            input_tokens=usage.get("input_tokens"),
+            output_tokens=usage.get("output_tokens"),
+            cost_usd=usage.get("cost_usd"),
             timestamp=datetime.now().isoformat()
         )
     

@@ -51,10 +51,20 @@ def init_database():
                 conversation_id TEXT NOT NULL,
                 role TEXT NOT NULL,  -- 'user' or 'assistant'
                 content TEXT NOT NULL,
+                input_tokens  INTEGER,  -- NULL for user messages
+                output_tokens INTEGER,  -- NULL for user messages
+                cost_usd      REAL,     -- NULL for user messages
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id)
             )
         """)
+
+        # Migration: add cost columns to messages for existing DBs
+        for _col, _ctype in [("input_tokens", "INTEGER"), ("output_tokens", "INTEGER"), ("cost_usd", "REAL")]:
+            try:
+                cursor.execute(f"ALTER TABLE messages ADD COLUMN {_col} {_ctype}")
+            except Exception:
+                pass  # Column already exists — skip
         
         # Usage stats table
         cursor.execute("""
@@ -130,8 +140,11 @@ class ConversationDB:
             """, (conversation_id, platform, user_id))
     
     @staticmethod
-    def add_message(conversation_id: str, role: str, content: str):
-        """Add message to conversation"""
+    def add_message(conversation_id: str, role: str, content: str,
+                    input_tokens: Optional[int] = None,
+                    output_tokens: Optional[int] = None,
+                    cost_usd: Optional[float] = None):
+        """Add message to conversation. Pass token/cost params for assistant messages."""
         with get_db() as conn:
             cursor = conn.cursor()
             # Update conversation timestamp
@@ -140,12 +153,12 @@ class ConversationDB:
                 SET updated_at = CURRENT_TIMESTAMP 
                 WHERE conversation_id = ?
             """, (conversation_id,))
-            
+
             # Insert message
             cursor.execute("""
-                INSERT INTO messages (conversation_id, role, content)
-                VALUES (?, ?, ?)
-            """, (conversation_id, role, content))
+                INSERT INTO messages (conversation_id, role, content, input_tokens, output_tokens, cost_usd)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (conversation_id, role, content, input_tokens, output_tokens, cost_usd))
     
     @staticmethod
     def get_conversation_history(conversation_id: str, limit: int = 50) -> List[Dict[str, Any]]:
