@@ -13,6 +13,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from anthropic import Anthropic
 from database import UsageStatsDB, ConversationDB, init_database
+from skills import TOOLS, process_tool_call
 
 # Debug: Print current working directory
 print("="*60)
@@ -26,7 +27,7 @@ print(f"🔧 Looking for .env at: {env_path}")
 print(f"✓ .env exists: {env_path.exists()}")
 
 if env_path.exists():
-    with open(env_path, 'r') as f:
+    with open(env_path, 'r', encoding='utf-8') as f:
         print("📝 .env file contents (first 3 lines):")
         for i, line in enumerate(f):
             if i < 3:
@@ -55,97 +56,21 @@ init_database()
 
 # Get Claude model from environment
 CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-20250514")
+BASE_PROMPT = os.getenv("BASE_PROMPT", "Bạn là chatbot bán hàng thông minh. Trả lời tiếng Việt, thân thiện, hữu ích.")
 print(f"🤖 Claude Model: {CLAUDE_MODEL}")
 print("="*60)
 
-# Define skills/tools
-TOOLS = [
-    {
-        "name": "get_orders",
-        "description": "Lấy danh sách đơn hàng gần đây",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "limit": {
-                    "type": "integer",
-                    "description": "Số lượng đơn hàng (default 5)"
-                }
-            },
-            "required": []
-        }
-    },
-    {
-        "name": "check_status",
-        "description": "Kiểm tra trạng thái một đơn hàng",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "order_id": {
-                    "type": "string",
-                    "description": "ID của đơn hàng"
-                }
-            },
-            "required": ["order_id"]
-        }
-    },
-    {
-        "name": "get_revenue",
-        "description": "Lấy doanh thu trong khoảng thời gian",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "period": {
-                    "type": "string",
-                    "description": "today, week, month"
-                }
-            },
-            "required": ["period"]
-        }
-    }
-]
-
-# Mock data functions
-def get_orders(limit=5):
-    """Mock: Trả về danh sách đơn hàng"""
-    orders = [
-        {"id": "ORD001", "customer": "Nguyễn A", "amount": 500000, "status": "shipped"},
-        {"id": "ORD002", "customer": "Trần B", "amount": 750000, "status": "processing"},
-        {"id": "ORD003", "customer": "Phạm C", "amount": 1200000, "status": "delivered"},
-    ]
-    return orders[:limit]
-
-def check_status(order_id):
-    """Mock: Kiểm tra trạng thái đơn hàng"""
-    statuses = {
-        "ORD001": {"id": "ORD001", "status": "shipped", "expected_delivery": "2026-03-15"},
-        "ORD002": {"id": "ORD002", "status": "processing", "expected_delivery": "2026-03-17"},
-        "ORD003": {"id": "ORD003", "status": "delivered", "delivered_at": "2026-03-10"},
-    }
-    return statuses.get(order_id, {"error": f"Order {order_id} not found"})
-
-def get_revenue(period="today"):
-    """Mock: Lấy doanh thu"""
-    revenues = {
-        "today": 5200000,
-        "week": 35800000,
-        "month": 125600000,
-    }
-    return {"period": period, "revenue": revenues.get(period, 0)}
-
-# Process tool calls
-def process_tool_call(tool_name, tool_input):
-    """Xử lý tool call từ Claude"""
-    if tool_name == "get_orders":
-        return get_orders(tool_input.get("limit", 5))
-    elif tool_name == "check_status":
-        return check_status(tool_input.get("order_id"))
-    elif tool_name == "get_revenue":
-        return get_revenue(tool_input.get("period", "today"))
-    else:
-        return {"error": f"Unknown tool: {tool_name}"}
-
 # Main bot function
-def chat_with_claude(user_message, conversation_history=None, conversation_id=None):
+def build_system_prompt(user_memory: str = "") -> str:
+    base = BASE_PROMPT
+
+    if user_memory:
+        base += f"\n\n---\n## Thông tin người dùng này (từ các cuộc trò chuyện trước)\n{user_memory}"
+
+    return base
+
+
+def chat_with_claude(user_message, conversation_history=None, conversation_id=None, user_memory: str = ""):
     """
     Chat với Claude, tự động gọi tools khi cần
     """
@@ -158,11 +83,8 @@ def chat_with_claude(user_message, conversation_history=None, conversation_id=No
         "content": user_message
     })
     
-    # System prompt
-    system_prompt = """Bạn là chatbot bán hàng thông minh của cửa hàng.
-    Bạn có thể truy cập các tool: get_orders, check_status, get_revenue.
-    Trả lời tiếng Việt, thân thiện, hữu ích.
-    Khi người dùng hỏi về đơn hàng, doanh thu, v.v., gọi tool thích hợp."""
+    # System prompt with injected user memory
+    system_prompt = build_system_prompt(user_memory)
     
     # Call Claude with tools
     response = client.messages.create(

@@ -70,6 +70,44 @@ def init_database():
             )
         """)
         
+        # User memory table (long-term per-user memory)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS user_memory (
+                user_id     TEXT PRIMARY KEY,
+                memory      TEXT NOT NULL,
+                updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        # Orders table (mock data — replace with real API source later)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id            TEXT PRIMARY KEY,
+                customer      TEXT NOT NULL,
+                amount        REAL NOT NULL,
+                status        TEXT NOT NULL,   -- shipped, processing, delivered, cancelled
+                created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expected_delivery DATE,
+                delivered_at  TIMESTAMP
+            )
+        """)
+
+        # Seed mock orders if table is empty
+        cursor.execute("SELECT COUNT(*) as cnt FROM orders")
+        if cursor.fetchone()["cnt"] == 0:
+            mock_orders = [
+                ("ORD001", "Nguyễn A", 500000, "shipped",   "2026-03-18", None),
+                ("ORD002", "Trần B",   750000, "processing", "2026-03-20", None),
+                ("ORD003", "Phạm C",   1200000, "delivered", None,         "2026-03-10 14:30:00"),
+                ("ORD004", "Lê D",     320000, "delivered",  None,         "2026-03-12 09:15:00"),
+                ("ORD005", "Hoàng E",   890000, "cancelled",  None,         None),
+            ]
+            cursor.executemany("""
+                INSERT INTO orders (id, customer, amount, status, expected_delivery, delivered_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, mock_orders)
+            print("   🌱 Seeded mock orders into DB")
+
         # Create indexes for faster queries
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_usage_timestamp ON usage_stats(timestamp DESC)")
@@ -150,6 +188,104 @@ class ConversationDB:
                 """, (limit,))
             
             return [dict(row) for row in cursor.fetchall()]
+
+
+class UserMemoryDB:
+    """Manage long-term per-user memory"""
+
+    @staticmethod
+    def get_memory(user_id: str) -> Optional[str]:
+        """Return memory blob for a user, or None if not exists"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT memory FROM user_memory WHERE user_id = ?", (user_id,))
+            row = cursor.fetchone()
+            return row["memory"] if row else None
+
+    @staticmethod
+    def upsert_memory(user_id: str, memory: str):
+        """Insert or update memory blob for a user"""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO user_memory (user_id, memory, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    memory = excluded.memory,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (user_id, memory))
+        print(f"🧠 Memory updated for user: {user_id[:8]}...")
+
+
+class OrdersDB:
+    """
+    Data access layer for orders.
+    Currently reads from local SQLite (mock data).
+    To switch to real API: replace method bodies only — callers stay the same.
+    """
+
+    @staticmethod
+    def get_orders(limit: int = 5) -> List[Dict[str, Any]]:
+        """Get recent orders, newest first."""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, customer, amount, status, expected_delivery, delivered_at, created_at
+                FROM orders
+                ORDER BY created_at DESC
+                LIMIT ?
+            """, (limit,))
+            return [dict(row) for row in cursor.fetchall()]
+
+    @staticmethod
+    def get_order(order_id: str) -> Optional[Dict[str, Any]]:
+        """Get a single order by ID."""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM orders WHERE id = ?", (order_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    @staticmethod
+    def get_revenue(period: str = "today") -> Dict[str, Any]:
+        """
+        Compute revenue from orders table.
+        period: 'today' | 'week' | 'month'
+        """
+        period_filter = {
+            "today": "DATE(created_at) = DATE('now')",
+            "week":  "created_at >= DATE('now', '-7 days')",
+            "month": "created_at >= DATE('now', '-30 days')",
+        }.get(period, "1=1")
+
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"""
+                SELECT
+                    COUNT(*) as order_count,
+                    COALESCE(SUM(amount), 0) as revenue
+                FROM orders
+                WHERE status != 'cancelled'
+                AND {period_filter}
+            """)
+            row = dict(cursor.fetchone())
+            return {"period": period, "revenue": row["revenue"], "order_count": row["order_count"]}
+
+    @staticmethod
+    def upsert_order(order: Dict[str, Any]):
+        """Insert or update an order (useful for syncing from real API)."""
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO orders (id, customer, amount, status, expected_delivery, delivered_at)
+                VALUES (:id, :customer, :amount, :status, :expected_delivery, :delivered_at)
+                ON CONFLICT(id) DO UPDATE SET
+                    customer = excluded.customer,
+                    amount = excluded.amount,
+                    status = excluded.status,
+                    expected_delivery = excluded.expected_delivery,
+                    delivered_at = excluded.delivered_at
+            """, order)
 
 
 class UsageStatsDB:

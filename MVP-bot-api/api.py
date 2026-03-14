@@ -32,7 +32,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 from bot import chat_with_claude
-from database import UsageStatsDB, ConversationDB, init_database
+from database import UsageStatsDB, ConversationDB, UserMemoryDB, init_database
+from memory import update_user_memory_async, should_summarize
 
 app = FastAPI(title="Bot MVP API", version="1.0")
 
@@ -68,6 +69,7 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     conversation_id: Optional[str] = None
+    user_id: Optional[str] = None   # persistent ID from frontend localStorage
 
 class ChatResponse(BaseModel):
     conversation_id: str
@@ -95,16 +97,18 @@ def reset_stats():
     return {"status": "reset", "message": "Statistics cleared"}
 
 @app.post("/chat")
-def chat(request: ChatRequest):
+async def chat(request: ChatRequest):
     """
     Chat with bot via API
     
     - If conversation_id is provided, continue existing conversation
     - Otherwise create new conversation
+    - user_id enables long-term memory across conversations
     """
     print(f"\n🔍 [API] POST /chat called")
     print(f"   Message: {request.message[:50]}...")
     print(f"   Conv ID: {request.conversation_id}")
+    print(f"   User ID: {request.user_id}")
     
     try:
         # Get or create conversation
@@ -114,19 +118,34 @@ def chat(request: ChatRequest):
         # Create conversation in DB if new
         if conv_id not in conversations:
             print(f"   ✅ Creating new conversation: {conv_id}")
-            ConversationDB.create_conversation(conv_id, platform="web")
+            ConversationDB.create_conversation(conv_id, platform="web", user_id=request.user_id)
+        
+        # Load long-term user memory if user_id provided
+        import asyncio
+        user_memory = ""
+        if request.user_id:
+            user_memory = UserMemoryDB.get_memory(request.user_id) or ""
+            if user_memory:
+                print(f"   🧠 Loaded memory ({len(user_memory)} chars) for {request.user_id[:8]}...")
         
         # Save user message to DB
         ConversationDB.add_message(conv_id, role="user", content=request.message)
         
-        # Get bot response
-        bot_response, history = chat_with_claude(request.message, history, conv_id)
+        # Get bot response (run sync function in thread to not block event loop)
+        bot_response, history = await asyncio.to_thread(
+            chat_with_claude, request.message, history, conv_id, user_memory
+        )
         
         # Save bot response to DB
         ConversationDB.add_message(conv_id, role="assistant", content=bot_response)
         
         # Store conversation in memory (for backward compatibility)
         conversations[conv_id] = history
+        
+        # Trigger async memory update in background (non-blocking)
+        if request.user_id and should_summarize(history):
+            print(f"   🧠 Scheduling memory update for {request.user_id[:8]}...")
+            asyncio.create_task(update_user_memory_async(request.user_id, history))
         
         from datetime import datetime
         print(f"   ✅ Chat response saved\n")
@@ -140,6 +159,20 @@ def chat(request: ChatRequest):
     except Exception as e:
         print(f"   ❌ Error: {e}\n")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/memory/{user_id}")
+def get_user_memory(user_id: str):
+    """Get current long-term memory for a user (for debugging)"""
+    memory = UserMemoryDB.get_memory(user_id)
+    if memory is None:
+        raise HTTPException(status_code=404, detail="No memory found for this user")
+    return {"user_id": user_id, "memory": memory}
+
+@app.delete("/memory/{user_id}")
+def clear_user_memory(user_id: str):
+    """Clear memory for a user"""
+    UserMemoryDB.upsert_memory(user_id, "")
+    return {"status": "cleared", "user_id": user_id}
 
 @app.get("/conversations/latest")
 def get_latest_conversation():
