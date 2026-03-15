@@ -1,0 +1,18 @@
+[Chunk 0035] | Trang 9 | ~498 tokens
+--------------------------------------------------
+ồng Việt Nam.
+- Tài khoản 1123 - Vàng tiền tệ: Phản ánh tình hình biến động và giá trị vàng tiền tệ của doanh nghiệp
+đang gửi tại Ngân hàng tại thời điểm báo cáo.
+3. Phương pháp kế toán một số giao dịch kinh tế chủ yếu
+3.1. Khi bán sản phẩm, hàng hoá, cung cấp dịch vụ thu ngay bằng tiền gửi ngân hàng, kế toán ghi
+nhận doanh thu, ghi:
+a) Đối với sản phẩm, hàng hoá, dịch vụ, bất động sản đầu tư thuộc đối tượng chịu thuế gián thu (thuế
+GTGT, thuế tiêu thụ đặc biệt, thuế xuất khẩu, thuế bảo vệ môi trường), kế toán phản ánh doanh thu
+bán hàng và cung cấp dịch vụ theo giá bán chưa có thuế, các khoản thuế gián thu phải nộp được tách
+riêng theo từng loại thuế ngay khi ghi nhận doanh thu (kể cả thuế GTGT phải nộp theo phương pháp
+trực tiếp), ghi:
+Nợ TK 112 - Tiền gửi ngân hàng (tổng giá thanh toán)
+Có TK511-Doanhthubán hàngvàcungcấp dịchvụ (giá chưa cóthuế)
+Có TK 333 - Thuế và các khoản phải nộp Nhà nước.
+b) Trường hợp không tách ngay được các khoản thuế phải nộp, kế toán ghi nhận doanh thu bao gồm
+cả thuế phải nộp. Định kỳ kế toán xác

@@ -1,0 +1,14 @@
+[Chunk 0004] | Trang 2 | ~496 tokens
+--------------------------------------------------
+1. Doanh nghiệp sử dụng ngoại tệ làm đơn vị tiền tệ trong kế toán thì đồng thời với việc lập Báo cáo
+tài chính theo đơn vị tiền tệ trong kế toán (ngoại tệ) còn phải chuyển đổi Báo cáo tài chính sang Đồng
+Việt Nam khi công bố và nộp Báo cáo tài chính cho cơ quan quản lý Nhà nước.
+2. Nguyên tắc chuyển đổi Báo cáo tài chính lập bằng đơn vị tiền tệ kế toán là ngoại tệ sang Đồng Việt
+Nam, trình bày thông tin so sánh được thực hiện theo quy định tại Chương III Thông tư này.
+3. Khi chuyển đổi Báo cáo tài chính được lập bằng ngoại tệ sang Đồng Việt Nam, doanh nghiệp phải
+trình bày rõ trên Bản thuyết minh Báo cáo tài chính những ảnh hưởng (nếu có) đối với Báo cáo tài
+chính do việc chuyển đổi Báo cáo tài chính từ đồng ngoại tệ sang Đồng Việt Nam.
+Điều 6. Kiểm toán Báo cáo tài chính trong trường hợp sử dụng đơn vị tiền tệ trong kế toán là
+ngoại tệ
+Báo cáo tài chính mang tính pháp lý để công bố ra công chúng và nộp các cơ quan có thẩm quyền tại
+Việt Nam là Báo cáo tài chính được trình bày bằng Đồng Việt Nam và phải được kiểm

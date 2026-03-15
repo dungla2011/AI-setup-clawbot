@@ -1,0 +1,16 @@
+[Chunk 0001] | Trang 1 | ~499 tokens
+--------------------------------------------------
+ới các doanh nghiệp thuộc mọi lĩnh vực, mọi thành
+phần kinh tế. Các doanh nghiệp vừa và nhỏ đang thực hiện kế toán theo Chế độ kế toán áp dụng cho
+doanh nghiệp vừa và nhỏ được vận dụng quy định của Thông tư này để kế toán phù hợp với đặc
+điểm kinh doanh và yêu cầu quản lý của mình.
+Điều 2. Phạm vi điều chỉnh
+Thông tư này hướng dẫn việc ghi sổ kế toán, lập và trình bày Báo cáo tài chính, không áp dụng cho
+việc xác định nghĩa vụ thuế của doanh nghiệp đối với ngân sách Nhà nước.
+Điều 3. Đơn vị tiền tệ trong kế toán
+“Đơn vị tiền tệ trong kế toán” là Đồng Việt Nam (ký hiệu quốc gia là “đ”; ký hiệu quốc tế là “VND”)
+được dùng để ghi sổ kế toán, lập và trình bày Báo cáo tài chính của doanh nghiệp. Trường hợp đơn
+vị kế toán chủ yếu thu, chi bằng ngoại tệ, đáp ứng được các tiêu chuẩn quy định tại Điều 4 Thông tư
+này thì được chọn một loại ngoại tệ làm đơn vị tiền tệ để ghi sổ kế toán.
+Điều 4. Lựa chọn đơn vị tiền tệ trong kế toán
+1. Doanh nghiệp có nghiệp vụ thu, chi chủ

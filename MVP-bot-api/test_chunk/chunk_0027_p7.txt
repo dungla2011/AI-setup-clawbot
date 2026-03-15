@@ -1,0 +1,18 @@
+[Chunk 0027] | Trang 7 | ~497 tokens
+--------------------------------------------------
+ái)
+Có các TK 131, 136, 138,… (tỷ giá ghi sổ kế toán).
+- Trường hợp nhận trước tiền của người mua, bên Có tài khoản phải thu áp dụng tỷ giá giao dịch thực
+tế tại thời điểm nhận trước, ghi:
+Nợ TK 111 (1112) (tỷ giá giao dịch thực tế tại thời điểm nhận trước)
+Có TK 131 (tỷ giá giao dịch thực tế tại thời điểm nhận trước).
+3.20. Kế toán sử dụng tỷ giá hối đoái giao dịch thực tế (là tỷ giá mua của ngân hàng) để đánh giá lại
+các khoản ngoại tệ là tiền mặt tại thời điểm lập Báo cáo tài chính, ghi:
+- Nếu tỷ giá ngoại tệ tăng so với Đồng Việt Nam, kế toán ghi nhận lãi tỷ giá:
+Nợ TK 111 (1112)
+Có TK 413 - Chênh lệch tỷ giá hối đoái (4131).
+- Nếu tỷ giá ngoại tệ giảm so với Đồng Việt Nam, kế toán ghi nhận lỗ tỷ giá:
+Nợ TK 413 - Chênh lệch tỷ giá hối đoái (4131)
+Có TK 111 (1112).
+- Sau khi bù trừ lãi, lỗ tỷ giá phát sinh do đánh giá lại, kế toán kết chuyển phần chênh lệch lãi, lỗ tỷ giá
+vào doanh thu hoạt động tài chính (nếu lãi lớn hơn lỗ)

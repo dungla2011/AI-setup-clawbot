@@ -1,0 +1,16 @@
+[Chunk 0015] | Trang 4 | ~497 tokens
+--------------------------------------------------
+c:
+- Bên Nợ TK 1112 áp dụng tỷ giá giao dịch thực tế. Riêng trường hợp rút ngoại tệ từ ngân hàng về
+nhập quỹ tiền mặt thì áp dụng tỷ giá ghi sổ kế toán của TK 1122;
+- Bên Có TK 1112 áp dụng tỷ giá ghi sổ bình quân gia quyền.
+Việc xác định tỷ giá hối đoái giao dịch thực tế được thực hiện theo quy định tại phần hướng dẫn tài
+khoản 413 - Chênh lệch tỷ giá hối đoái và các tài khoản có liên quan.
+g) Vàng tiền tệ được phản ánh trong tài khoản này là vàng được sử dụng với các chức năng cất trữ
+giá trị, không bao gồm các loại vàng được phân loại là hàng tồn kho sử dụng với mục đích là nguyên
+vật liệu để sản xuất sản phẩm hoặc hàng hoá để bán. Việc quản lý và sử dụng vàng tiền tệ phải thực
+hiện theo quy định của pháp luật hiện hành.
+h) Tại tất cả các thời điểm lập Báo cáo tài chính theo quy định của pháp luật, doanh nghiệp phải đánh
+giá lại số dư ngoại tệ và vàng tiền tệ theo nguyên tắc:
+- Tỷ giá giao dịch thực tế áp dụng khi đánh giá lại số dư tiền mặt bằng ngoại tệ là tỷ giá mua ngoại tệ
+của ngân hàng thương mại

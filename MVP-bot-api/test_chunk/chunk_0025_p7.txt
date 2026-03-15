@@ -1,0 +1,19 @@
+[Chunk 0025] | Trang 7 | ~499 tokens
+--------------------------------------------------
+Nợ các TK 151, 152, 153,156,157,211,213,241,623, 627, 641, 642,133,… (theo tỷ giá hối đoái giao
+dịch thực tế tại ngày giao dịch)
+Có TK 111 (1112) (theo tỷ giá ghi sổ kế toán)
+Có TK 515 - Doanh thu hoạt động tài chính (lãi tỷ giá hối đoái).
+b) Khi thanh toán các khoản nợ phải trả bằng ngoại tệ:
+- Nếu phát sinh lỗ tỷ giá hối đoái , ghi:
+Nợ các TK 331, 335, 336, 338, 341,… (tỷ giá ghi sổ kế toán)
+Nợ TK 635 - Chi phí tài chính (lỗ tỷ giá hối đoái)
+Có TK 111 (1112) (tỷ giá ghi sổ kế toán).
+- Nếu phát sinh lãi tỷ giá hối đoái, ghi:
+Nợ các TK 331, 336, 341,… (tỷ giá ghi sổ kế toán)
+Có TK 515 - Doanh thu hoạt động tài chính (lãi tỷ giá hối đoái)
+Có TK 111 (1112) (tỷ giá ghi sổ kế toán).
+- Trường hợp trả trước tiền bằng ngoại tệ cho người bán, bên Nợ tài khoản phải trả áp dụng tỷ giá
+giao dịch thực tế tại thời điểm trả trước, ghi:
+Nợ TK 331 - Phải trả cho người bán (tỷ giá thực tế thời điểm trả trước)
+Nợ TK 635 - Chi phí tài chính

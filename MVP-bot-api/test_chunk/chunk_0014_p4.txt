@@ -1,0 +1,14 @@
+[Chunk 0014] | Trang 4 | ~497 tokens
+--------------------------------------------------
+c) Khi tiến hành nhập, xuất quỹ tiền mặt phải có phiếu thu, phiếu chi và có đủ chữ ký của người nhận,
+người giao, người có thẩm quyền cho phép nhập, xuất quỹ theo quy định của chế độ chứng từ kế
+toán. Một số trường hợp đặc biệt phải có lệnh nhập quỹ, xuất quỹ đính kèm.
+d) Kế toán quỹ tiền mặt phải có trách nhiệm mở sổ kế toán quỹ tiền mặt, ghi chép hàng ngày liên tục
+theo trình tự phát sinh các khoản thu, chi, xuất, nhập quỹ tiền mặt, ngoại tệ và tính ra số tồn quỹ tại
+mọi thời điểm.
+đ) Thủ quỹ chịu trách nhiệm quản lý và nhập, xuất quỹ tiền mặt. Hàng ngày thủ quỹ phải kiểm kê số
+tồn quỹ tiền mặt thực tế, đối chiếu số liệu sổ quỹ tiền mặt và sổ kế toán tiền mặt. Nếu có chênh lệch,
+kế toán và thủ quỹ phải kiểm tra lại để xác định nguyên nhân và kiến nghị biện pháp xử lý chênh lệch.
+e) Khi phát sinh các giao dịch bằng ngoại tệ, kế toán phải quy đổi ngoại tệ ra Đồng Việt Nam theo
+nguyên tắc:
+- Bên Nợ TK 1112 áp dụng tỷ giá giao dịch thực tế. Riêng trường hợp rút ngoại tệ từ ngân hàng

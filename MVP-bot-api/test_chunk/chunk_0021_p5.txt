@@ -1,0 +1,21 @@
+[Chunk 0021] | Trang 5 | ~472 tokens
+--------------------------------------------------
+344.
+3.6. Khi bán các khoản đầu tư ngắn hạn, dài hạn thu bằng tiền mặt, kế toán ghi nhận chênh lệch giữa
+số tiền thu được và giá vốn khoản đầu tư (được xác định theo phương pháp bình quân gia quyền)
+vào doanh thu hoạt động tài chính hoặc chi phí tài chính, ghi:
+Nợ TK 111 - Tiền mặt (1111, 1112)
+Nợ TK 635 - Chi phí tài chính
+Có TK 121 - Chứng khoán kinh doanh (giá vốn)
+Có các TK 221, 222, 228 (giá vốn)
+Có TK 515 - Doanh thu hoạt động tài chính.
+3.7. Khi nhận được vốn góp của chủ sở hữu bằng tiền mặt, ghi:
+Nợ TK 111 - Tiền mặt
+Có TK 411 - Vốn đầu tư của chủ sở hữu.
+3.8. Khi nhận tiền của các bên trong hợp đồng hợp tác kinh doanh không thành lập pháp nhân để
+trang trải cho các hoạt động chung, ghi:
+Nợ TK 111 - Tiền mặt
+Có TK 338 - Phải trả, phải nộp khác.
+3.9. Xuất quỹ tiền mặt gửi vào tài khoản tại Ngân hàng, ký quỹ, ký cược, ghi:
+Nợ TK 112 - Tiền gửi Ngân hàng
+Nợ TK 244 - Cầm cố, thế chấp, ký quỹ, ký cược

@@ -1,0 +1,9 @@
+[Chunk 0013] | Trang 3 | ~255 tokens
+--------------------------------------------------
+ỹ tại quỹ doanh nghiệp bao gồm: Tiền
+Việt Nam, ngoại tệ và vàng tiền tệ. Chỉ phản ánh vào TK 111 “Tiền mặt” số tiền mặt, ngoại tệ, vàng
+tiền tệ thực tế nhập, xuất, tồn quỹ. Đối với khoản tiền thu được chuyển nộp ngay vào Ngân hàng
+(không qua quỹ tiền mặt của doanh nghiệp) thì không ghi vào bên Nợ TK 111 “Tiền mặt” mà ghi vào
+bên Nợ TK 113 “Tiền đang chuyển”.
+b) Các khoản tiền mặt do doanh nghiệp khác và cá nhân ký cược, ký quỹ tại doanh nghiệp được quản
+lý và hạch toán như các loại tài sản bằng tiền của doanh nghiệp.

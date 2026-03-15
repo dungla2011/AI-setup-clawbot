@@ -1,0 +1,19 @@
+[Chunk 0019] | Trang 5 | ~499 tokens
+--------------------------------------------------
+a) Đối với sản phẩm, hàng hoá, dịch vụ, bất động sản đầu tư thuộc đối tượng chịu thuế GTGT, thuế
+tiêu thụ đặc biệt, thuế xuất khẩu, thuế bảo vệ môi trường, kế toán phản ánh doanh thu bán hàng và
+cung cấp dịch vụ theo giá bán chưa có thuế, các khoản thuế (gián thu) phải nộp này được tách riêng
+theo từng loại ngay khi ghi nhận doanh thu (kể cả thuế GTGT phải nộp theo phương pháp trực tiếp),
+ghi:
+Nợ TK 111 - Tiền mặt (tổng giá thanh toán)
+Có TK 511 - Doanh thu bán hàng và cung cấp dịch vụ (giá chưa có thuế)
+Có TK 333 - Thuế và các khoản phải nộp Nhà nước.
+b) Trường hợp không tách ngay được các khoản thuế phải nộp, kế toán ghi nhận doanh thu bao gồm
+cả thuế phải nộp. Định kỳ kế toán xác định nghĩa vụ thuế phải nộp và ghi giảm doanh thu, ghi:
+Nợ TK 511 - Doanh thu bán hàng và cung cấp dịch vụ
+Có TK 333 - Thuế và các khoản phải nộp Nhà nước.
+3.2. Khi nhận được tiền của Ngân sách Nhà nước thanh toán về khoản trợ cấp, trợ giá bằng tiền mặt,
+ghi:
+Nợ TK 111 - Tiền mặt
+Có TK 333 - Thuế và các khoản phải nộp Nhà nước (3339).
+3.3. Khi phát sinh các

@@ -1,0 +1,14 @@
+[Chunk 0030] | Trang 8 | ~497 tokens
+--------------------------------------------------
+ch giữa số liệu trên sổ kế toán của doanh nghiệp, số liệu ở chứng từ
+gốc với số liệu trên chứng từ của Ngân hàng thì doanh nghiệp phải thông báo cho Ngân hàng để
+cùng đối chiếu, xác minh và xử lý kịp thời. Cuối tháng, chưa xác định được nguyên nhân chênh lệch
+thì kế toán ghi sổ theo số liệu của Ngân hàng trên giấy báo Nợ, báo Có hoặc bản sao kê. Số chênh
+lệch (nếu có) ghi vào bên Nợ TK 138 “Phải thu khác” (1388) (nếu số liệu của kế toán lớn hơn số liệu
+của Ngân hàng) hoặc ghi vào bên Có TK 338 “Phải trả, phải nộp khác” (3388) (nếu số liệu của kế toán
+nhỏ hơn số liệu của Ngân hàng). Sang tháng sau, tiếp tục kiểm tra, đối chiếu, xác định nguyên nhân
+để điều chỉnh số liệu ghi sổ.
+b) Ở những doanh nghiệp có các tổ chức, bộ phận phụ thuộc không tổ chức kế toán riêng, có thể mở
+tài khoản chuyên thu, chuyên chi hoặc mở tài khoản thanh toán phù hợp để thuận tiện cho việc giao
+dịch, thanh toán. Kế toán phải mở sổ chi tiết theo từng loại tiền gửi (Đồng Việt Nam, ngoại tệ các loại).
+c) Phải tổ chức hạch toán chi tiết số tiền gửi theo từng tài khoản ở Ngân hàng để tiện cho

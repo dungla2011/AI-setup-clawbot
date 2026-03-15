@@ -1,0 +1,23 @@
+[Chunk 0023] | Trang 6 | ~499 tokens
+--------------------------------------------------
+giá mua bao gồm cả thuế GTGT.
+3.13. Khi mua nguyên vật liệu thanh toán bằng tiền mặt sử dụng ngay vào sản xuất, kinh doanh, nếu
+thuế GTGT đầu vào được khấu trừ, ghi:
+Nợ các TK 621, 623, 627, 641, 642,...
+Nợ TK 133 - Thuế GTGT được khấu trừ (1331)
+Có TK 111 - Tiền mặt.
+Nếu thuế GTGT đầu vào không được khấu trừ, kế toán phản ánh chi phí bao gồm cả thuế GTGT.
+3.14. Xuất quỹ tiền mặt thanh toán các khoản vay, nợ phải trả, ghi:
+Nợ các TK 331, 333, 334, 335, 336, 338, 341
+Có TK 111 - Tiền mặt.
+3.15. Xuất quỹ tiền mặt sử dụng cho hoạt động tài chính, hoạt động khác, ghi:
+Nợ các TK 635, 811,…
+Nợ TK 133 - Thuế GTGT được khấu trừ (nếu có)
+Có TK 111 - Tiền mặt.
+3.16. Các khoản thiếu quỹ tiền mặt phát hiện khi kiểm kê chưa xác định rõ nguyên nhân, ghi:
+Nợ TK 138 - Phải thu khác (1381)
+Có TK 111 - Tiền mặt.
+3.17. Các khoản thừa quỹ tiền mặt phát hiện khi kiểm kê chưa xác định rõ nguyên nhân, ghi:
+Nợ TK 111 - Tiền mặt
+Có TK 338 - Phải trả, phải nộp khác (3381).
+3.18. Kế toán hợp

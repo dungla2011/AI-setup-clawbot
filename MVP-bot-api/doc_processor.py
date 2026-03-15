@@ -115,18 +115,30 @@ def chunk_text(text: str, page: int = 1) -> list[dict]:
     start = 0
     idx   = 0
     while start < len(tokens):
-        end   = min(start + CHUNK_SIZE, len(tokens))
+        end          = min(start + CHUNK_SIZE, len(tokens))
         chunk_tokens = tokens[start:end]
-        chunk_text   = enc.decode(chunk_tokens)
-        chunks.append({
-            "chunk_index": idx,
-            "page":        page,
-            "text":        chunk_text.strip(),
-            "token_count": len(chunk_tokens),
-        })
+        chunk_str    = enc.decode(chunk_tokens)
+
+        # Trim to word boundary (avoid cutting mid-word) when not at end of text
+        if end < len(tokens):
+            last_space = chunk_str.rfind(' ')
+            if last_space > 0:
+                chunk_str    = chunk_str[:last_space]
+                chunk_tokens = enc.encode(chunk_str)
+
+        chunk_str = chunk_str.strip()
+        if chunk_str:
+            chunks.append({
+                "chunk_index": idx,
+                "page":        page,
+                "text":        chunk_str,
+                "token_count": len(chunk_tokens),
+            })
+
         if end == len(tokens):
             break
-        start += CHUNK_SIZE - CHUNK_OVERLAP
+
+        start += max(1, len(chunk_tokens) - CHUNK_OVERLAP)
         idx   += 1
     return chunks
 

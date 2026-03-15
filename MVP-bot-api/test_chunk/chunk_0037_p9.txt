@@ -1,0 +1,7 @@
+[Chunk 0037] | Trang 9 | ~80 tokens
+--------------------------------------------------
+khách hàng trả nợ bằng chuyển khoản, căn cứ giấy báo Có
+của Ngân hàng, ghi:
+Nợ TK 112 - Tiền gửi Ngân hàng
+Có TK 131 - Phải thu của khách hàng
+Có TK 113 - Tiền đang chuyển.

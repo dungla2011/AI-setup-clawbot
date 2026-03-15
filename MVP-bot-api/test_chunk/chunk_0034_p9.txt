@@ -1,0 +1,18 @@
+[Chunk 0034] | Trang 9 | ~498 tokens
+--------------------------------------------------
+- Chênh lệch tỷ giá hối đoái do đánh giá lại số dư ngoại tệ tại thời điểm báo cáo (trường hợp tỷ giá
+ngoại tệ tăng so với Đồng Việt Nam).
+- Chênh lệch đánh giá lại vàng tiền tệ tăng tại thời điểm báo cáo
+Bên Có:
+- Các khoản tiền Việt Nam, ngoại tệ, vàng tiền tệ rút ra từ Ngân hàng;
+- Chênh lệch tỷ giá hối đoái do đánh giá lại số dư ngoại tệ cuối kỳ (trường hợp tỷ giá ngoại tệ giảm so
+với Đồng Việt Nam).
+- Chênh lệch đánh giá lại vàng tiền tệ giảm tại thời điểm báo cáo
+Số dư bên Nợ:
+Số tiền Việt Nam, ngoại tệ, vàng tiền tệ hiện còn gửi tại Ngân hàng tại thời điểm báo cáo.
+Tài khoản 112 - Tiền gửi Ngân hàng, có 3 tài khoản cấp 2:
+- Tài khoản 1121 - Tiền Việt Nam: Phản ánh số tiền gửi vào, rút ra và hiện đang gửi tại Ngân hàng
+bằng Đồng Việt Nam.
+- Tài khoản 1122 - Ngoại tệ: Phản ánh số tiền gửi vào, rút ra và hiện đang gửi tại Ngân hàng bằng
+ngoại tệ các loại đã quy đổi ra Đồng Việt Nam.
+- Tài khoản 1123 - Vàng tiền tệ: Phản ánh tình hình biến động và giá trị vàng tiền tệ của doanh

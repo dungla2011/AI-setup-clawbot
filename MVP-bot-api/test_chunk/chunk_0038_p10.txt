@@ -1,0 +1,20 @@
+[Chunk 0038] | Trang 10 | ~499 tokens
+--------------------------------------------------
+3.6. Thu hồi các khoản nợ phải thu, cho vay, ký cược, ký quỹ bằng tiền gửi ngân hàng; Nhận ký quỹ,
+ký cược của các doanh nghiệp khác bằng tiền gửi ngân hàng, ghi:
+Nợ TK 112 - Tiền gửi Ngân hàng (1121, 1122)
+Có các TK 128, 131, 136, 141, 244, 344.
+3.7. Khi bán các khoản đầu tư ngắn hạn, dài hạn thu bằng tiền gửi ngân hàng, kế toán ghi nhận
+chênh lệch giữa số tiền thu được và giá vốn khoản đầu tư (được xác định theo phương pháp bình
+quân gia quyền) vào doanh thu hoạt động tài chính hoặc chi phí tài chính, ghi:
+Nợ TK 112 - Tiền gửi Ngân hàng (1121, 1122)
+Nợ TK 635 - Chi phí tài chính
+Có TK 121 - Chứng khoán kinh doanh (giá vốn)
+Có các TK 221, 222, 228 (giá vốn)
+Có TK 515 - Doanh thu hoạt động tài chính.
+3.8. Khi nhận được vốn góp của chủ sở hữu bằng tiền mặt, ghi:
+Nợ TK 112 - Tiền gửi Ngân hàng
+Có TK 411 - Vốn đầu tư của chủ sở hữu.
+3.9. Khi nhận tiền của các bên trong hợp đồng hợp tác kinh doanh không thành lập pháp nhân để
+trang trải cho các hoạt động chung, ghi:
+Nợ TK 112 - Tiền gửi Ngân

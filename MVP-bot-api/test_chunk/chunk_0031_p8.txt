@@ -1,0 +1,18 @@
+[Chunk 0031] | Trang 8 | ~498 tokens
+--------------------------------------------------
+Nam, ngoại tệ các loại).
+c) Phải tổ chức hạch toán chi tiết số tiền gửi theo từng tài khoản ở Ngân hàng để tiện cho việc kiểm
+tra, đối chiếu.
+d) Khoản thấu chi ngân hàng không được ghi âm trên tài khoản tiền gửi ngân hàng mà được phản
+ánh tương tự như khoản vay ngân hàng.
+đ) Khi phát sinh các giao dịch bằng ngoại tệ, kế toán phải quy đổi ngoại tệ ra Đồng Việt Nam theo
+nguyên tắc:
+- Bên Nợ TK 1122 áp dụng tỷ giá giao dịch thực tế. Riêng trường hợp rút quỹ tiền mặt bằng ngoại tệ
+gửi vào Ngân hàng thì phải được quy đổi ra Đồng Việt Nam theo tỷ giá ghi sổ kế toán của tài khoản
+1112.
+- Bên Có TK 1122 áp dụng tỷ giá ghi sổ Bình quân gia quyền.
+Việc xác định tỷ giá hối đoái giao dịch thực tế được thực hiện theo quy định tại phần hướng dẫn tài
+khoản 413 - Chênh lệch tỷ giá hối đoái và các tài khoản có liên quan.
+e) Vàng tiền tệ được phản ánh trong tài khoản này là vàng được sử dụng với các chức năng cất trữ
+giá trị, không bao gồm các loại vàng được phân loại là hàng tồn kho sử dụng với mục đích là nguyên
+vật liệu để sản xuất sản phẩm hoặc hàng hoá để bán.

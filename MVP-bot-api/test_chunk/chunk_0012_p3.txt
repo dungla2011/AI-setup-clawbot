@@ -1,0 +1,17 @@
+[Chunk 0012] | Trang 3 | ~497 tokens
+--------------------------------------------------
+ệ và tính ra số tồn tại quỹ và từng tài khoản ở Ngân hàng tại mọi thời điểm để
+tiện cho việc kiểm tra, đối chiếu.
+2. Các khoản tiền do doanh nghiệp khác và cá nhân ký cược, ký quỹ tại doanh nghiệp được quản lý
+và hạch toán như tiền của doanh nghiệp.
+3. Khi thu, chi phải có phiếu thu, phiếu chi và có đủ chữ ký theo quy định của chế độ chứng từ kế toán.
+4. Kế toán phải theo dõi chi tiết tiền theo nguyên tệ. Khi phát sinh các giao dịch bằng ngoại tệ, kế toán
+phải quy đổi ngoại tệ ra Đồng Việt Nam theo nguyên tắc:
+- Bên Nợ các tài khoản tiền áp dụng tỷ giá giao dịch thực tế;
+- Bên Có các tài khoản tiền áp dụng tỷ giá ghi sổ bình quân gia quyền.
+5. Tại thời điểm lập Báo cáo tài chính theo quy định của pháp luật, doanh nghiệp phải đánh giá lại số
+dư ngoại tệ và vàng tiền tệ theo tỷ giá giao dịch thực tế.
+Điều 12. Tài khoản 111 – Tiền mặt
+1. Nguyên tắc kế toán
+a) Tài khoản này dùng để phản ánh tình hình thu, chi, tồn quỹ tại quỹ doanh nghiệp bao gồm: Tiền
+Việt Nam, ngoại tệ và vàng tiền tệ. Chỉ phản ánh vào TK 111

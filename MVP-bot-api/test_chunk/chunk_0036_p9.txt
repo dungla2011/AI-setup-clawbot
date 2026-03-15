@@ -1,0 +1,22 @@
+[Chunk 0036] | Trang 9 | ~498 tokens
+--------------------------------------------------
+các khoản thuế phải nộp, kế toán ghi nhận doanh thu bao gồm
+cả thuế phải nộp. Định kỳ kế toán xác định nghĩa vụ thuế phải nộp và ghi giảm doanh thu, ghi:
+Nợ TK 511 - Doanh thu bán hàng và cung cấp dịch vụ
+Có TK 333 - Thuế và các khoản phải nộp Nhà nước.
+3.2. Khi nhận được tiền của Ngân sách Nhà nước thanh toán về khoản trợ cấp, trợ giá bằng tiền gửi
+ngân hàng, ghi:
+Nợ TK 112 - Tiền gửi ngân hàng
+Có TK 333 - Thuế và các khoản phải nộp Nhà nước (3339).
+3.3. Khi phát sinh các khoản doanh thu hoạt động tài chính, các khoản thu nhập khác bằng tiền gửi
+ngân hàng, ghi:
+Nợ TK 112 - Tiền gửi ngân hàng (tổng giá thanh toán)
+Có TK 515 - Doanh thu hoạt động tài chính (giá chưa có thuế GTGT)
+Có TK 711 - Thu nhập khác (giá chưa có thuế GTGT)
+Có TK 3331 - Thuế GTGT phải nộp (33311).
+3.4. Xuất quỹ tiền mặt gửi vào tài khoản tại Ngân hàng, ghi:
+Nợ TK 112 - Tiền gửi Ngân hàng
+Có TK 111 - Tiền mặt.
+3.5. Nhận được tiền ứng trước hoặc khi khách hàng trả nợ bằng chuyển khoản, căn cứ giấy báo Có
+của Ngân hàng, ghi:
+Nợ TK 112 - Tiền gửi Ngân

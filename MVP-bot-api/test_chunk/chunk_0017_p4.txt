@@ -1,0 +1,19 @@
+[Chunk 0017] | Trang 4 | ~498 tokens
+--------------------------------------------------
+ăng tại thời điểm báo cáo.
+Bên Có:
+- Các khoản tiền mặt, ngoại tệ, vàng tiền tệ xuất quỹ;
+- Số tiền mặt, ngoại tệ, vàng tiền tệ thiếu hụt quỹ phát hiện khi kiểm kê;
+- Chênh lệch tỷ giá hối đoái do đánh giá lại số dư ngoại tệ báo cáo (trường hợp tỷ giá ngoại tệ giảm
+so với Đồng Việt Nam);
+- Chênh lệch đánh giá lại vàng tiền tệ giảm tại thời điểm báo cáo.
+Số dư bên Nợ:
+Các khoản tiền mặt, ngoại tệ, vàng tiền tệ còn tồn quỹ tiền mặt tại thời điểm báo cáo.
+Tài khoản 111 - Tiền mặt, có 3 tài khoản cấp 2:
+- Tài khoản 1111 - Tiền Việt Nam: Phản ánh tình hình thu, chi, tồn quỹ tiền Việt Nam tại quỹ tiền mặt.
+- Tài khoản 1112 - Ngoại tệ: Phản ánh tình hình thu, chi, chênh lệch tỷ giá và số dư ngoại tệ tại quỹ
+tiền mặt theo giá trị quy đổi ra Đồng Việt Nam.
+- Tài khoản 1113 - Vàng tiền tệ: Phản ánh tình hình biến động và giá trị vàng tiền tệ tại quỹ của doanh
+nghiệp.
+3. Phương pháp kế toán một số giao dịch kinh tế chủ yếu
+3.1. Khi bán sản phẩm, hàng hoá, cung cấp

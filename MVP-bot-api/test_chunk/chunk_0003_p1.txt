@@ -1,0 +1,11 @@
+[Chunk 0003] | Trang 1 | ~303 tokens
+--------------------------------------------------
+cung cấp bằng chứng về đơn vị tiền tệ trong kế toán của
+đơn vị:
+a) Đơn vị tiền tệ sử dụng để huy động các nguồn lực tài chính (như phát hành cổ phiếu, trái phiếu);
+b) Đơn vị tiền tệ thường xuyên thu được từ các hoạt động kinh doanh và được tích trữ lại.
+4. Đơn vị tiền tệ trong kế toán phản ánh các giao dịch, sự kiện, điều kiện liên quan đến hoạt động của
+đơn vị. Sau khi xác định được đơn vị tiền tệ trong kế toán thì đơn vị không được thay đổi trừ khi có sự
+thay đổi trọng yếu trong các giao dịch, sự kiện và điều kiện đó.
+Điều 5. Chuyển đổi Báo cáo tài chính lập bằng đơn vị tiền tệ trong kế toán là ngoại tệ sang
+Đồng Việt Nam

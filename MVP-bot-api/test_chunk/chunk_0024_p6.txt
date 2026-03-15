@@ -1,0 +1,15 @@
+[Chunk 0024] | Trang 6 | ~347 tokens
+--------------------------------------------------
+ân, ghi:
+Nợ TK 111 - Tiền mặt
+Có TK 338 - Phải trả, phải nộp khác (3381).
+3.18. Kế toán hợp đồng mua bán lại trái phiếu Chính phủ: Thực hiện theo quy định tại phần hướng
+dẫn TK 171 - Giao dịch mua, bán lại trái phiếu Chính phủ.
+3.19. Các giao dịch liên quan đến ngoại tệ là tiền mặt.
+a) Khi mua hàng hóa, dịch vụ thanh toán bằng tiền mặt là ngoại tệ.
+- Nếu phát sinh lỗ tỷ giá hối đoái, ghi:
+Nợ các TK 151,152,153,156,157,211,213,241, 623, 627, 641,642,133,… (theo tỷ giá hối đoái giao
+dịch thực tế tại ngày giao dịch)
+Nợ TK 635 - Chi phí tài chính (lỗ tỷ giá hối đoái)
+Có TK 111 (1112) (theo tỷ giá ghi sổ kế toán).
+- Nếu phát sinh lãi tỷ giá hối đoái, ghi:

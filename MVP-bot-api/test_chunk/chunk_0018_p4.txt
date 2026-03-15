@@ -1,0 +1,6 @@
+[Chunk 0018] | Trang 4 | ~85 tokens
+--------------------------------------------------
+p.
+3. Phương pháp kế toán một số giao dịch kinh tế chủ yếu
+3.1. Khi bán sản phẩm, hàng hoá, cung cấp dịch vụ thu ngay bằng tiền mặt, kế toán ghi nhận doanh
+thu, ghi:

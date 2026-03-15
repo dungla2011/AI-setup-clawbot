@@ -1,0 +1,22 @@
+[Chunk 0039] | Trang 10 | ~499 tokens
+--------------------------------------------------
+ợp tác kinh doanh không thành lập pháp nhân để
+trang trải cho các hoạt động chung, ghi:
+Nợ TK 112 - Tiền gửi Ngân hàng
+Có TK 338 - Phải trả, phải nộp khác.
+3.10. Rút tiền gửi Ngân hàng về nhập quỹ tiền mặt, chuyển tiền gửi Ngân hàng đi ký quỹ, ký cược, ghi:
+Nợ TK 111 - Tiền mặt
+Nợ TK 244 - Cầm cố, thế chấp, ký quỹ, ký cược.
+Có TK 112 - Tiền gửi Ngân hàng.
+3.11. Mua chứng khoán, cho vay hoặc đầu tư vào công ty con, công ty liên doanh, liên kết... bằng tiền
+gửi ngân hàng, ghi:
+Nợ các TK 121, 128, 221, 222, 228
+Có TK 112 - Tiền gửi Ngân hàng.
+3.12. Mua hàng tồn kho (theo phương pháp kê khai thường xuyên), mua TSCĐ, chi cho hoạt động
+đầu tư XDCB bằng tiền gửi ngân hàng, ghi:
+- Nếu thuế GTGT đầu vào được khấu trừ, kế toán phản ánh giá mua không bao gồm thuế GTGT, ghi:
+Nợ các TK 151, 152, 153, 156, 157, 211, 213, 241
+Nợ TK 133 - Thuế GTGT được khấu trừ (1331)
+Có TK 112 - Tiền gửi Ngân hàng.
+- Nếu thuế GTGT đầu vào không được khấu trừ, kế toán phản ánh giá mua bao gồm cả thuế GTGT.
+3.13. Mua hàng tồn kho

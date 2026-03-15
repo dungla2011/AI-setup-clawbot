@@ -1,0 +1,9 @@
+[Chunk 0033] | Trang 8 | ~176 tokens
+--------------------------------------------------
+o tài
+chính. Giá mua trên thị trường trong nước là giá mua được công bố bởi Ngân hàng Nhà nước.
+Trường hợp Ngân hàng Nhà nước không công bố giá mua vàng thì tính theo giá mua công bố bởi các
+đơn vị được phép kinh doanh vàng theo luật định.
+2. Kết cấu và nội dung phản ánh của tài khoản 112 - Tiền gửi ngân hàng
+Bên Nợ:
+- Các khoản tiền Việt Nam, ngoại tệ, vàng tiền tệ gửi vào Ngân hàng;

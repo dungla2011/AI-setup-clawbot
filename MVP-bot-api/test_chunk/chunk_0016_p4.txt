@@ -1,0 +1,19 @@
+[Chunk 0016] | Trang 4 | ~498 tokens
+--------------------------------------------------
+p dụng khi đánh giá lại số dư tiền mặt bằng ngoại tệ là tỷ giá mua ngoại tệ
+của ngân hàng thương mại nơi doanh nghiệp thường xuyên có giao dịch (do doanh nghiệp tự lựa
+chọn) tại thời điểm lập Báo cáo tài chính.
+- Vàng tiền tệ được đánh giá lại theo giá mua trên thị trường trong nước tại thời điểm lập Báo cáo tài
+chính. Giá mua trên thị trường trong nước là giá mua được công bố bởi Ngân hàng Nhà nước.
+Trường hợp Ngân hàng Nhà nước không công bố giá mua vàng thì tính theo giá mua công bố bởi các
+đơn vị được phép kinh doanh vàng theo luật định.
+2. Kết cấu và nội dung phản ánh của tài khoản 111 - Tiền mặt
+Bên Nợ:
+- Các khoản tiền mặt, ngoại tệ, vàng tiền tệ nhập quỹ;
+- Số tiền mặt, ngoại tệ, vàng tiền tệ thừa ở quỹ phát hiện khi kiểm kê;
+- Chênh lệch tỷ giá hối đoái do đánh giá lại số dư ngoại tệ tại thời điểm báo cáo (trường hợp tỷ giá
+ngoại tệ tăng so với Đồng Việt Nam);
+- Chênh lệch đánh giá lại vàng tiền tệ tăng tại thời điểm báo cáo.
+Bên Có:
+- Các khoản tiền mặt, ngoại tệ, vàng tiền tệ xuất quỹ;
+- Số

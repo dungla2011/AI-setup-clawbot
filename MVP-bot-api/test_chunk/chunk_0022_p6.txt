@@ -1,0 +1,21 @@
+[Chunk 0022] | Trang 6 | ~499 tokens
+--------------------------------------------------
+Có TK 111 - Tiền mặt.
+3.10. Xuất quỹ tiền mặt mua chứng khoán, cho vay hoặc đầu tư vào công ty con, đầu tư vào công ty
+liên doanh, liên kết..., ghi:
+Nợ TK 121, 128, 221, 222, 228
+Có TK 111 - Tiền mặt.
+3.11. Xuất quỹ tiền mặt mua hàng tồn kho (theo phương pháp kê khai thường xuyên), mua TSCĐ, chi
+cho hoạt động đầu tư XDCB:
+- Nếu thuế GTGT đầu vào được khấu trừ, kế toán phản ánh giá mua không bao gồm thuế GTGT, ghi:
+Nợ các TK 151, 152, 153, 156, 157, 211, 213, 241
+Nợ TK 133 - Thuế GTGT được khấu trừ (1331)
+Có TK 111 - Tiền mặt.
+- Nếu thuế GTGT đầu vào không được khấu trừ, kế toán phản ánh giá mua bao gồm cả thuế GTGT.
+3.12. Xuất quỹ tiền mặt mua hàng tồn kho (theo phương pháp kiểm kê định kỳ), nếu thuế GTGT đầu
+vào được khấu trừ, ghi:
+Nợ TK 611 - Mua hàng (6111, 6112)
+Nợ TK 133 - Thuế GTGT được khấu trừ (1331)
+Có TK 111 - Tiền mặt.
+Nếu thuế GTGT đầu vào không được khấu trừ, kế toán phản ánh giá mua bao gồm cả thuế GTGT.
+3.13. Khi mua nguyên vật liệu thanh toán bằng tiền mặt sử dụng ngay

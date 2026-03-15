@@ -1,0 +1,5 @@
+[Chunk 0028] | Trang 7 | ~94 tokens
+--------------------------------------------------
+phần chênh lệch lãi, lỗ tỷ giá
+vào doanh thu hoạt động tài chính (nếu lãi lớn hơn lỗ) hoặc chi phí tài chính (nếu lãi nhỏ hơn lỗ).
+3.21. Kế toán đánh giá lại vàng tiền tệ

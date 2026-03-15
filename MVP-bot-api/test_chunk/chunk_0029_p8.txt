@@ -1,0 +1,18 @@
+[Chunk 0029] | Trang 8 | ~498 tokens
+--------------------------------------------------
+- Trường hợp giá đánh giá lại vàng tiền tệ phát sinh lãi, kế toán ghi nhận doanh thu hoạt động tài
+chính, ghi:
+Nợ TK 1113 - Vàng tiền tệ (theo giá mua trong nước)
+Có TK 515 - Doanh thu hoạt động tài chính.
+- Trường hợp giá đánh giá lại vàng tiền tệ phát sinh lỗ, kế toán ghi nhận chi phí tài chính, ghi:
+Nợ TK 635 - Chi phí tài chính
+Có TK 1113 - Vàng tiền tệ (theo giá mua trong nước).
+Điều 13. Tài khoản 112 - Tiền gửi ngân hàng
+1. Nguyên tắc kế toán
+Tài khoản này dùng để phản ánh số hiện có và tình hình biến động tăng, giảm các khoản tiền gửi
+không kỳ hạn tại Ngân hàng của doanh nghiệp. Căn cứ để hạch toán trên tài khoản 112 “tiền gửi
+Ngân hàng” là các giấy báo Có, báo Nợ hoặc bản sao kê của Ngân hàng kèm theo các chứng từ gốc
+(uỷ nhiệm chi, uỷ nhiệm thu, séc chuyển khoản, séc bảo chi,…).
+a) Khi nhận được chứng từ của Ngân hàng gửi đến, kế toán phải kiểm tra, đối chiếu với chứng từ gốc
+kèm theo. Nếu có sự chênh lệch giữa số liệu trên sổ kế toán của doanh nghiệp, số liệu ở chứng từ
+gốc với số liệu trên chứng từ của Ngân hàng thì
