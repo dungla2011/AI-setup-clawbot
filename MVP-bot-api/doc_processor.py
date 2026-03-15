@@ -49,40 +49,8 @@ def _get_tokenizer():
 
 
 def _clean_pdf_text(text: str) -> str:
-    """
-    Fix common pypdf extraction artifacts for Vietnamese PDFs with Type3 fonts.
-
-    Two patterns handled:
-      A) One character PER LINE  → join all lines into one string
-      B) Spaces BETWEEN chars on same line: 'd o a n h' → 'doanh'
-         Detected when >35% of whitespace-split tokens are single characters.
-    """
+    """Light whitespace cleanup for pdfplumber output (already geometry-aware)."""
     import re
-    lines = text.splitlines()
-
-    # ── Pattern A: one char per line ─────────────────────────────────────────
-    single_char_lines = sum(1 for l in lines if len(l.strip()) <= 2)
-    if len(lines) > 10 and single_char_lines / len(lines) > 0.4:
-        joined = " ".join(l.strip() for l in lines if l.strip())
-        text = re.sub(r" {2,}", " ", joined)
-        # Fall through to also fix pattern B if needed
-
-    # ── Pattern B: spaces between every character on a line ──────────────────
-    tokens = text.split()
-    if len(tokens) > 10:
-        single_char_tokens = sum(1 for t in tokens if len(t) == 1)
-        if single_char_tokens / len(tokens) > 0.35:
-            # Iteratively collapse adjacent single-char tokens: 'c ủ a' → 'của'
-            prev = None
-            while prev != text:
-                prev = text
-                text = re.sub(r'(?<!\S)(\w) (?=\w(?:\s|$))', r'\1', text)
-            # Simpler fallback: direct collapse of all (single-char SPACE)+ sequences
-            text = re.sub(r'\b(\w)\b( \b\w\b)+',
-                          lambda m: m.group(0).replace(' ', ''), text)
-            text = re.sub(r' {2,}', ' ', text)
-
-    # ── Normal whitespace cleanup ─────────────────────────────────────────────
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r"[ \t]+", " ", text)
     return text.strip()
@@ -91,22 +59,21 @@ def _clean_pdf_text(text: str) -> str:
 # ── Parsers ──────────────────────────────────────────────────────────────────
 
 def _parse_pdf(path: Path, doc_id: str = "", original_name: str = "") -> list[dict]:
-    """Return list of {page: int, text: str} using pymupdf (handles Type3 fonts correctly)."""
-    import fitz  # pymupdf
-    doc = fitz.open(str(path))
-    total_pages = len(doc)
-    if doc_id:
-        _log(doc_id, f"📖 PDF {total_pages} trang — bắt đầu đọc...", original_name)
-    pages = []
+    """Return list of {page: int, text: str} using pdfplumber (geometry-aware, better spacing)."""
+    import pdfplumber
     LOG_EVERY = 10
-    for i in range(total_pages):
-        text = doc[i].get_text()
-        text = text.strip()
-        if text:
-            pages.append({"page": i + 1, "text": text})
-        if doc_id and (i + 1) % LOG_EVERY == 0:
-            _log(doc_id, f"📖 Đọc trang {i + 1}/{total_pages}...", original_name)
-    doc.close()
+    pages = []
+    with pdfplumber.open(str(path)) as pdf:
+        total_pages = len(pdf.pages)
+        if doc_id:
+            _log(doc_id, f"📖 PDF {total_pages} trang — bắt đầu đọc...", original_name)
+        for i, pg in enumerate(pdf.pages):
+            text = pg.extract_text(x_tolerance=2, y_tolerance=3) or ""
+            text = _clean_pdf_text(text)
+            if text:
+                pages.append({"page": i + 1, "text": text})
+            if doc_id and (i + 1) % LOG_EVERY == 0:
+                _log(doc_id, f"📖 Đọc trang {i + 1}/{total_pages}...", original_name)
     return pages
 
 
