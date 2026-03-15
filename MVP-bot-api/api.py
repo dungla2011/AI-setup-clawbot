@@ -150,7 +150,9 @@ async def chat(request: ChatRequest):
             )
             if chunks:
                 retrieved_context = format_context(chunks)
-                print(f"   📚 RAG: {len(chunks)} chunks retrieved (top score: {chunks[0]['score']})")
+                print(f"   📚 RAG: {len(chunks)} chunks retrieved (top score: {chunks[0]['score']}, role={request.user_role})")
+            else:
+                print(f"   📚 RAG: 0 chunks (role={request.user_role}, no relevant docs in allowed categories)")
         except Exception as e:
             print(f"   ⚠️ RAG retrieval failed (non-blocking): {e}")
         
@@ -290,6 +292,177 @@ def delete_conversation(conversation_id: str):
         del conversations[conversation_id]
         return {"message": "Conversation deleted"}
     raise HTTPException(status_code=404, detail="Conversation not found")
+
+
+# ── User / Role management ──────────────────────────────────────────────────
+
+class CreateUserRequest(BaseModel):
+    username: str
+    display_name: str
+    role_id: str
+
+class UpdateUserRequest(BaseModel):
+    display_name: Optional[str] = None
+    role_id: Optional[str] = None
+    is_active: Optional[int] = None
+
+class CreateRoleRequest(BaseModel):
+    id: str
+    name: str
+    description: Optional[str] = None
+
+class UpdateRoleRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class UpdateRoleCategoriesRequest(BaseModel):
+    category_ids: list[str]
+
+
+@app.get("/users")
+def list_users():
+    with get_db() as conn:
+        rows = conn.cursor().execute("""
+            SELECT u.id, u.username, u.display_name, u.role_id, u.is_active, u.created_at,
+                   r.name AS role_name
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.id
+            ORDER BY u.created_at ASC
+        """).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.post("/users", status_code=201)
+def create_user(req: CreateUserRequest):
+    user_id = str(uuid.uuid4())
+    try:
+        with get_db() as conn:
+            conn.cursor().execute(
+                "INSERT INTO users (id, username, display_name, role_id) VALUES (?,?,?,?)",
+                (user_id, req.username, req.display_name, req.role_id)
+            )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"id": user_id, "username": req.username, "display_name": req.display_name, "role_id": req.role_id}
+
+
+@app.put("/users/{user_id}")
+def update_user(user_id: str, req: UpdateUserRequest):
+    with get_db() as conn:
+        cur = conn.cursor()
+        user = cur.execute("SELECT id FROM users WHERE id=?", (user_id,)).fetchone()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if req.display_name is not None:
+            cur.execute("UPDATE users SET display_name=? WHERE id=?", (req.display_name, user_id))
+        if req.role_id is not None:
+            cur.execute("UPDATE users SET role_id=? WHERE id=?", (req.role_id, user_id))
+        if req.is_active is not None:
+            cur.execute("UPDATE users SET is_active=? WHERE id=?", (req.is_active, user_id))
+    return {"ok": True}
+
+
+@app.delete("/users/{user_id}")
+def delete_user(user_id: str):
+    with get_db() as conn:
+        cur = conn.cursor()
+        existing = cur.execute("SELECT id FROM users WHERE id=?", (user_id,)).fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="User not found")
+        cur.execute("DELETE FROM users WHERE id=?", (user_id,))
+    return {"ok": True}
+
+
+@app.get("/roles")
+def list_roles():
+    with get_db() as conn:
+        cur = conn.cursor()
+        rows = cur.execute("""
+            SELECT r.id, r.name, r.description, r.created_at,
+                   COUNT(DISTINCT u.id) AS user_count,
+                   COUNT(DISTINCT rc.category_id) AS category_count
+            FROM roles r
+            LEFT JOIN users u ON u.role_id = r.id
+            LEFT JOIN role_category_access rc ON rc.role_id = r.id
+            GROUP BY r.id
+            ORDER BY r.created_at ASC
+        """).fetchall()
+    return [dict(r) for r in rows]
+
+
+@app.post("/roles", status_code=201)
+def create_role(req: CreateRoleRequest):
+    try:
+        with get_db() as conn:
+            conn.cursor().execute(
+                "INSERT INTO roles (id, name, description) VALUES (?,?,?)",
+                (req.id, req.name, req.description)
+            )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return {"id": req.id, "name": req.name}
+
+
+@app.put("/roles/{role_id}")
+def update_role(role_id: str, req: UpdateRoleRequest):
+    with get_db() as conn:
+        cur = conn.cursor()
+        if not cur.execute("SELECT id FROM roles WHERE id=?", (role_id,)).fetchone():
+            raise HTTPException(status_code=404, detail="Role not found")
+        if req.name is not None:
+            cur.execute("UPDATE roles SET name=? WHERE id=?", (req.name, role_id))
+        if req.description is not None:
+            cur.execute("UPDATE roles SET description=? WHERE id=?", (req.description, role_id))
+    return {"ok": True}
+
+
+@app.delete("/roles/{role_id}")
+def delete_role(role_id: str):
+    with get_db() as conn:
+        cur = conn.cursor()
+        if not cur.execute("SELECT id FROM roles WHERE id=?", (role_id,)).fetchone():
+            raise HTTPException(status_code=404, detail="Role not found")
+        user_count = cur.execute("SELECT COUNT(*) AS cnt FROM users WHERE role_id=?", (role_id,)).fetchone()["cnt"]
+        if user_count > 0:
+            raise HTTPException(status_code=400, detail=f"Cannot delete: {user_count} user(s) still assigned to this role")
+        cur.execute("DELETE FROM role_category_access WHERE role_id=?", (role_id,))
+        cur.execute("DELETE FROM roles WHERE id=?", (role_id,))
+    return {"ok": True}
+
+
+@app.get("/roles/{role_id}/categories")
+def get_role_categories(role_id: str):
+    with get_db() as conn:
+        rows = conn.cursor().execute(
+            "SELECT category_id FROM role_category_access WHERE role_id=?", (role_id,)
+        ).fetchall()
+    return [r["category_id"] for r in rows]
+
+
+@app.put("/roles/{role_id}/categories")
+def set_role_categories(role_id: str, req: UpdateRoleCategoriesRequest):
+    with get_db() as conn:
+        cur = conn.cursor()
+        if not cur.execute("SELECT id FROM roles WHERE id=?", (role_id,)).fetchone():
+            raise HTTPException(status_code=404, detail="Role not found")
+        cur.execute("DELETE FROM role_category_access WHERE role_id=?", (role_id,))
+        for cat_id in req.category_ids:
+            cur.execute(
+                "INSERT OR IGNORE INTO role_category_access (role_id, category_id) VALUES (?,?)",
+                (role_id, cat_id)
+            )
+    return {"ok": True, "assigned": req.category_ids}
+
+
+@app.get("/categories")
+def list_categories():
+    with get_db() as conn:
+        rows = conn.cursor().execute(
+            "SELECT id, name, is_public, description FROM doc_categories ORDER BY name"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 
 @app.get("/")
 def root():

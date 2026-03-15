@@ -132,7 +132,7 @@
       const loadingId = "loading-" + Date.now();
       addLoading(loadingId);
       try {
-        const userRole = document.getElementById('roleSelect').value;
+        const userRole = (window.getCurrentUserRole && window.getCurrentUserRole()) || document.getElementById('roleSelect').value;
         const response = await fetch(`${API_URL}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -232,6 +232,16 @@
       updateUsageStats();
       checkApiHealth();
       messageInput.focus();
+
+      // Sync roleSelect when nav user changes
+      window.addEventListener('navUserChanged', (e) => {
+        const user = e.detail;
+        const roleSelect = document.getElementById('roleSelect');
+        if (user && roleSelect) {
+          roleSelect.value = user.role_id;
+          localStorage.setItem('chatUserRole', user.role_id);
+        }
+      });
     });
   </script>
 </body>

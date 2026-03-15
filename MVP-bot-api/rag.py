@@ -13,19 +13,34 @@ from embeddings import embed, from_blob, cosine_similarity
 
 # ── Access control ────────────────────────────────────────────────────────────
 
-CATEGORY_ACCESS: dict[str, Optional[list[str]]] = {
-    "customer": ["customer_guide", "product_faq"],
-    "staff":    None,   # None = all categories
-    "admin":    None,
-}
-
-
 def get_allowed_categories(user_role: str) -> Optional[list[str]]:
     """
-    Return list of allowed category IDs for this role.
-    None means ALL categories allowed.
+    Return list of allowed category IDs for this role (from DB).
+    Returns None to signal "all categories" only when every category is covered.
+    Returns [] when the role has no permissions at all.
     """
-    return CATEGORY_ACCESS.get(user_role, CATEGORY_ACCESS["customer"])
+    with get_db() as conn:
+        rows = conn.cursor().execute(
+            "SELECT category_id FROM role_category_access WHERE role_id = ?",
+            (user_role,)
+        ).fetchall()
+
+    if not rows:
+        # Unknown role or no permissions — deny everything
+        return []
+
+    allowed = [r["category_id"] for r in rows]
+
+    # Check if this covers ALL existing categories (treat as "unrestricted")
+    with get_db() as conn:
+        total = conn.cursor().execute(
+            "SELECT COUNT(*) as cnt FROM doc_categories"
+        ).fetchone()["cnt"]
+
+    if len(allowed) >= total:
+        return None   # None = all categories allowed
+
+    return allowed
 
 
 # ── Retrieval ─────────────────────────────────────────────────────────────────

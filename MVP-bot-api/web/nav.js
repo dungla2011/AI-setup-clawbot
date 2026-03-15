@@ -8,8 +8,10 @@
  *        initNav(API_URL);
  *
  * Provides:
- *   - Rendered navbar HTML (brand, links, usage-pill)
- *   - window.updateUsageStats() — pages can call this after events (e.g. post-send)
+ *   - Rendered navbar HTML (brand, links, usage-pill, user dropdown)
+ *   - window.updateUsageStats()   — pages can call after events (e.g. post-send)
+ *   - window.getCurrentUser()     — returns current user object {id,username,display_name,role_id,...}
+ *   - window.getCurrentUserRole() — returns role_id string (or "customer" as fallback)
  *   - Auto-refresh of the pill every 15 s
  */
 (function () {
@@ -19,8 +21,30 @@
     { key: 'stats',    href: 'stats.html',    icon: '&#x1F4CA;', label: 'Thống kê' },
     { key: 'docs',     href: 'docs.html',     icon: '&#x1F4D6;', label: 'API Docs' },
     { key: 'admin',    href: 'admin.html',    icon: '&#x1F4C1;', label: 'Admin' },
+    { key: 'settings', href: 'settings.html', icon: '&#x2699;&#xFE0F;', label: 'Settings' },
   ];
 
+  // ── State ────────────────────────────────────────────────────────────
+  let _users = [];        // cached user list
+  let _currentUser = null;
+
+  const STORAGE_KEY = 'currentUserId';
+
+  function _saveUser(user) {
+    _currentUser = user;
+    if (user) {
+      localStorage.setItem(STORAGE_KEY, user.id);
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    // Dispatch event so pages can react (e.g. index.html refreshes role)
+    window.dispatchEvent(new CustomEvent('navUserChanged', { detail: user }));
+  }
+
+  window.getCurrentUser     = () => _currentUser;
+  window.getCurrentUserRole = () => (_currentUser && _currentUser.role_id) || 'customer';
+
+  // ── initNav ──────────────────────────────────────────────────────────
   window.initNav = function (apiUrl) {
     const nav = document.getElementById('app-nav');
     if (!nav) return;
@@ -38,15 +62,63 @@
       </button>
       <div class="collapse navbar-collapse" id="navMain">
         <ul class="navbar-nav mx-auto gap-1">${links}</ul>
-        <div class="usage-pill">
-          <div class="stat-item"><span class="stat-label">Requests:</span><span class="stat-value" id="statRequests">&mdash;</span></div>
-          <span class="stat-sep">|</span>
-          <div class="stat-item"><span class="stat-label">Tokens:</span><span class="stat-value" id="statTokens">&mdash;</span></div>
-          <span class="stat-sep">|</span>
-          <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value" id="statCost">&mdash;</span></div>
+        <div class="d-flex align-items-center gap-2">
+          <select id="navUserSelect" class="form-select form-select-sm" style="max-width:180px;font-size:.82rem;"
+                  title="Chọn user đang đăng nhập">
+            <option value="">👤 Chọn user...</option>
+          </select>
+          <div class="usage-pill">
+            <div class="stat-item"><span class="stat-label">Requests:</span><span class="stat-value" id="statRequests">&mdash;</span></div>
+            <span class="stat-sep">|</span>
+            <div class="stat-item"><span class="stat-label">Tokens:</span><span class="stat-value" id="statTokens">&mdash;</span></div>
+            <span class="stat-sep">|</span>
+            <div class="stat-item"><span class="stat-label">Cost:</span><span class="stat-value" id="statCost">&mdash;</span></div>
+          </div>
         </div>
       </div>`;
 
+    // ── Load users ──────────────────────────────────────────────────
+    const sel = document.getElementById('navUserSelect');
+
+    async function loadUsers() {
+      try {
+        const res = await fetch(`${apiUrl}/users`);
+        if (!res.ok) return;
+        _users = await res.json();
+
+        // Rebuild options
+        sel.innerHTML = '<option value="">👤 Chọn user...</option>';
+        _users.forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.id;
+          opt.textContent = `${u.display_name} (${u.role_id})`;
+          if (!u.is_active) opt.textContent += ' [inactive]';
+          sel.appendChild(opt);
+        });
+
+        // Restore from localStorage
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const found = _users.find(u => u.id === saved);
+          if (found) {
+            sel.value = saved;
+            _currentUser = found;
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    sel.addEventListener('change', () => {
+      const user = _users.find(u => u.id === sel.value) || null;
+      _saveUser(user);
+    });
+
+    loadUsers();
+
+    // Expose so pages can reload user list after create/delete
+    window.reloadNavUsers = loadUsers;
+
+    // ── Usage pill ──────────────────────────────────────────────────
     async function refreshStats() {
       try {
         const res = await fetch(`${apiUrl}/stats`);
@@ -62,9 +134,7 @@
       } catch (e) { /* silently ignore network errors */ }
     }
 
-    // Expose globally so pages can trigger an immediate refresh (e.g. after sending a message)
     window.updateUsageStats = refreshStats;
-
     refreshStats();
     setInterval(refreshStats, 15000);
   };

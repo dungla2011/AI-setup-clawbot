@@ -132,6 +132,37 @@ def init_database():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_category ON doc_chunks(category_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_doc ON doc_chunks(doc_id)")
 
+        # ── User / Role tables ────────────────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS roles (
+                id          TEXT PRIMARY KEY,          -- "customer", "staff", "admin"
+                name        TEXT NOT NULL,             -- display name (VN)
+                description TEXT,
+                created_at  TEXT DEFAULT (datetime('now'))
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id           TEXT PRIMARY KEY,
+                username     TEXT UNIQUE NOT NULL,
+                display_name TEXT NOT NULL,
+                role_id      TEXT NOT NULL REFERENCES roles(id),
+                is_active    INTEGER DEFAULT 1,
+                created_at   TEXT DEFAULT (datetime('now'))
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS role_category_access (
+                role_id     TEXT NOT NULL REFERENCES roles(id),
+                category_id TEXT NOT NULL REFERENCES doc_categories(id),
+                PRIMARY KEY (role_id, category_id)
+            )
+        """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role_id)")
+
         # Seed default categories if empty
         cursor.execute("SELECT COUNT(*) as cnt FROM doc_categories")
         if cursor.fetchone()["cnt"] == 0:
@@ -148,6 +179,50 @@ def init_database():
                 default_cats
             )
             print("   🌱 Seeded default doc categories")
+
+        # Seed default roles if empty
+        cursor.execute("SELECT COUNT(*) as cnt FROM roles")
+        if cursor.fetchone()["cnt"] == 0:
+            cursor.executemany(
+                "INSERT INTO roles (id, name, description) VALUES (?,?,?)",
+                [
+                    ("customer", "Khách hàng", "Người dùng cuối, chỉ xem tài liệu công khai"),
+                    ("staff",    "Nhân viên",  "Nhân viên nội bộ, xem được tài liệu nội bộ"),
+                    ("admin",    "Quản trị",   "Quản trị viên, toàn quyền truy cập"),
+                ]
+            )
+            print("   🌱 Seeded default roles")
+
+        # Seed default users if empty
+        cursor.execute("SELECT COUNT(*) as cnt FROM users")
+        if cursor.fetchone()["cnt"] == 0:
+            import uuid as _uuid
+            cursor.executemany(
+                "INSERT INTO users (id, username, display_name, role_id) VALUES (?,?,?,?)",
+                [
+                    (str(_uuid.uuid4()), "customer01", "Nguyễn Khách",    "customer"),
+                    (str(_uuid.uuid4()), "staff01",    "Trần Nhân Viên",  "staff"),
+                    (str(_uuid.uuid4()), "admin01",    "Lê Quản Trị",     "admin"),
+                ]
+            )
+            print("   🌱 Seeded default users")
+
+        # Seed role_category_access if empty
+        cursor.execute("SELECT COUNT(*) as cnt FROM role_category_access")
+        if cursor.fetchone()["cnt"] == 0:
+            all_cat_ids = [r[0] for r in cursor.execute("SELECT id FROM doc_categories").fetchall()]
+            public_cats = ["customer_guide", "product_faq"]
+            entries = []
+            for cat in public_cats:
+                entries.append(("customer", cat))
+            for cat in all_cat_ids:
+                entries.append(("staff", cat))
+                entries.append(("admin", cat))
+            cursor.executemany(
+                "INSERT OR IGNORE INTO role_category_access (role_id, category_id) VALUES (?,?)",
+                entries
+            )
+            print("   🌱 Seeded default role_category_access")
 
         # Orders table (mock data — replace with real API source later)
         cursor.execute("""
