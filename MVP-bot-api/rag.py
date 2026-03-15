@@ -68,21 +68,26 @@ def retrieve(
             # All categories
             cursor.execute("""
                 SELECT c.id, c.content, c.category_id, c.page_num, c.embedding,
+                       c.token_count,
                        d.filename
                 FROM doc_chunks c
                 JOIN documents d ON c.doc_id = d.id
-                WHERE d.is_active = 1 AND c.embedding IS NOT NULL
+                WHERE d.is_active = 1
+                  AND c.embedding IS NOT NULL
+                  AND c.token_count >= 30
             """)
         else:
             placeholders = ",".join("?" * len(allowed))
             cursor.execute(f"""
                 SELECT c.id, c.content, c.category_id, c.page_num, c.embedding,
+                       c.token_count,
                        d.filename
                 FROM doc_chunks c
                 JOIN documents d ON c.doc_id = d.id
                 WHERE c.category_id IN ({placeholders})
                   AND d.is_active = 1
                   AND c.embedding IS NOT NULL
+                  AND c.token_count >= 30
             """, allowed)
 
         rows = cursor.fetchall()

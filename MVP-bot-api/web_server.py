@@ -32,13 +32,15 @@ class CORSRequestHandler(SimpleHTTPRequestHandler):
         clean_path = self.path.split('?')[0]
         print(f"🔍 do_GET path='{self.path}' clean='{clean_path}'")
         
-        if clean_path == '/' or clean_path == '/index.html' or clean_path == '/stats.html' or clean_path == '/docs.html' or clean_path == '/admin.html':
+        if clean_path == '/' or clean_path == '/index.html' or clean_path == '/stats.html' or clean_path == '/docs.html' or clean_path == '/admin.html' or clean_path == '/messages.html':
             if clean_path == '/stats.html':
                 filename = 'stats.html'
             elif clean_path == '/docs.html':
                 filename = 'docs.html'
             elif clean_path == '/admin.html':
                 filename = 'admin.html'
+            elif clean_path == '/messages.html':
+                filename = 'messages.html'
             else:
                 filename = 'index.html'
             # Read html file and inject API_URL from .env

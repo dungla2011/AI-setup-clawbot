@@ -43,6 +43,11 @@
 
   <!-- Input Area -->
   <div class="input-area">
+    <select id="roleSelect" title="User role" style="border:none;background:#f0f0f0;border-radius:6px;padding:4px 8px;font-size:.8rem;color:#555;cursor:pointer;flex-shrink:0">
+      <option value="customer">👤 Customer</option>
+      <option value="staff">🛡️ Staff</option>
+      <option value="admin">⚙️ Admin</option>
+    </select>
     <input type="text" class="chat-input" id="messageInput" placeholder="Nhập tin nhắn..." onkeyup="handleKeyUp(event)">
     <button class="btn btn-grad px-4" onclick="sendMessage()" id="sendBtn">&#x1F4E4; Gửi</button>
     <button class="btn btn-new px-3" onclick="startNewConversation()" title="Ctrl+N">&#x1F504; Mới</button>
@@ -127,10 +132,11 @@
       const loadingId = "loading-" + Date.now();
       addLoading(loadingId);
       try {
+        const userRole = document.getElementById('roleSelect').value;
         const response = await fetch(`${API_URL}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, conversation_id: conversationId, user_id: userId }),
+          body: JSON.stringify({ message, conversation_id: conversationId, user_id: userId, user_role: userRole }),
         });
         if (!response.ok) throw new Error(`API error: ${response.status}`);
         const data = await response.json();
@@ -216,6 +222,12 @@
 
     window.addEventListener("load", () => {
       document.getElementById('welcomeTime').textContent = fmtTime();
+      // Restore saved role
+      const savedRole = localStorage.getItem('chatUserRole');
+      if (savedRole) document.getElementById('roleSelect').value = savedRole;
+      document.getElementById('roleSelect').onchange = function() {
+        localStorage.setItem('chatUserRole', this.value);
+      };
       loadConversationHistory();
       updateUsageStats();
       checkApiHealth();

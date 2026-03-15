@@ -39,6 +39,7 @@
               <th>Input Tokens</th>
               <th>Output Tokens</th>
               <th>Chi ph&#237; (USD)</th>
+              <th>Chi ph&#237; (VN&#272;)</th>
             </tr>
           </thead>
           <tbody id="sessionsBody"></tbody>
@@ -111,7 +112,8 @@
             <td>${session.model.split('-')[1]}</td>
             <td>${session.input_tokens.toLocaleString()}</td>
             <td>${session.output_tokens.toLocaleString()}</td>
-            <td class="cost-highlight">$${session.cost_usd.toFixed(6)}</td>`;
+            <td class="cost-highlight">$${session.cost_usd.toFixed(6)}</td>
+            <td class="text-muted small">${Math.round(session.cost_usd * 25500).toLocaleString('vi-VN')} ₫</td>`;
           tbody.appendChild(row);
         });
       }

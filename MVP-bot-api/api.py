@@ -32,7 +32,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 from bot import chat_with_claude
-from database import UsageStatsDB, ConversationDB, UserMemoryDB, init_database
+from database import UsageStatsDB, ConversationDB, UserMemoryDB, init_database, get_db
 from memory import update_user_memory_async, should_summarize
 from docs_api import router as docs_router
 from rag import retrieve as rag_retrieve, format_context
@@ -251,6 +251,37 @@ def get_conversation(conversation_id: str):
     ]
     
     return {"conversation_id": conversation_id, "history": formatted_history}
+
+@app.get("/messages")
+def list_messages(page: int = 1, per_page: int = 20, role: str = None):
+    """List all messages with pagination, newest first. Optionally filter by role (user/assistant)."""
+    offset = (page - 1) * per_page
+    with get_db() as conn:
+        cursor = conn.cursor()
+        where = "WHERE m.role = ?" if role else ""
+        params_count = (role,) if role else ()
+        total = cursor.execute(
+            f"SELECT COUNT(*) FROM messages m {where}", params_count
+        ).fetchone()[0]
+
+        params = (role, per_page, offset) if role else (per_page, offset)
+        rows = cursor.execute(f"""
+            SELECT m.id, m.role, m.content, m.input_tokens, m.output_tokens, m.cost_usd,
+                   m.created_at, m.conversation_id
+            FROM messages m
+            {where}
+            ORDER BY m.created_at DESC
+            LIMIT ? OFFSET ?
+        """, params).fetchall()
+
+    return {
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": max(1, (total + per_page - 1) // per_page),
+        "messages": [dict(r) for r in rows],
+    }
+
 
 @app.delete("/conversations/{conversation_id}")
 def delete_conversation(conversation_id: str):
