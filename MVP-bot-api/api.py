@@ -32,10 +32,10 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uuid
 from bot import chat_with_claude
-from database import UsageStatsDB, ConversationDB, UserMemoryDB, init_database, get_db
+from database import UsageStatsDB, ConversationDB, UserMemoryDB, init_database, get_db, get_user_by_id, get_role_label
 from memory import update_user_memory_async, should_summarize
 from docs_api import router as docs_router
-from rag import retrieve as rag_retrieve, format_context
+from rag import retrieve as rag_retrieve, format_context, get_allowed_categories
 
 app = FastAPI(title="Bot MVP API", version="1.0")
 
@@ -47,6 +47,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Global error handler — ensures CORS headers are present even on unhandled 500s
+from fastapi.responses import JSONResponse
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
 
 # Add request logging middleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -74,7 +84,7 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     conversation_id: Optional[str] = None
-    user_id: Optional[str] = None        # persistent ID from frontend localStorage
+    user_id: Optional[int] = None        # DB user id (integer)
     user_role: Optional[str] = "customer" # customer | staff | admin
     category_hint: Optional[str] = None   # which doc category to search (optional)
 
@@ -130,55 +140,76 @@ async def chat(request: ChatRequest):
             print(f"   ✅ Creating new conversation: {conv_id}")
             ConversationDB.create_conversation(conv_id, platform="web", user_id=request.user_id)
         
-        # Load long-term user memory if user_id provided
         import asyncio
+
+        # ── Resolve authoritative role from DB ──────────────────────────
+        # If user_id matches a row in the users table, trust DB role_id.
+        # This prevents frontend from spoofing a higher-privilege role.
+        effective_role = request.user_role or "customer"
+        db_user = get_user_by_id(request.user_id) if request.user_id else None
+        if db_user:
+            effective_role = db_user["role_id"]
+            print(f"   👤 Role from DB: '{effective_role}' (user: {db_user['username']})")
+        else:
+            print(f"   👤 Role from request (browser session): '{effective_role}'")
+
+        # ── Long-term memory ─────────────────────────────────────────────
         user_memory = ""
         if request.user_id:
-            user_memory = UserMemoryDB.get_memory(request.user_id) or ""
+            user_memory = UserMemoryDB.get_memory(str(request.user_id)) or ""
             if user_memory:
-                print(f"   🧠 Loaded memory ({len(user_memory)} chars) for {request.user_id[:8]}...")
+                print(f"   🧠 Memory loaded ({len(user_memory)} chars) for user_id={request.user_id}")
+            else:
+                print(f"   🧠 No memory yet for user_id={request.user_id}")
 
         # RAG: retrieve relevant document chunks (based on user role + optional category)
         retrieved_context = ""
+        restricted_access = False   # True when role has a limited category whitelist
         try:
+            allowed = await asyncio.to_thread(get_allowed_categories, effective_role)
+            restricted_access = (allowed is not None)  # None = unrestricted (all categories)
             chunks = await asyncio.to_thread(
                 rag_retrieve, request.message,
-                request.user_role or "customer",
+                effective_role,
                 5,   # top_k
                 0.30, # min_score
                 request.category_hint,
             )
             if chunks:
                 retrieved_context = format_context(chunks)
-                print(f"   📚 RAG: {len(chunks)} chunks retrieved (top score: {chunks[0]['score']}, role={request.user_role})")
+                print(f"   📚 RAG: {len(chunks)} chunks retrieved (top score: {chunks[0]['score']}, role={effective_role}, restricted={restricted_access})")
             else:
-                print(f"   📚 RAG: 0 chunks (role={request.user_role}, no relevant docs in allowed categories)")
+                print(f"   📚 RAG: 0 chunks (role={effective_role}, restricted={restricted_access}, no relevant docs in allowed categories)")
         except Exception as e:
             print(f"   ⚠️ RAG retrieval failed (non-blocking): {e}")
         
         # Save user message to DB
-        ConversationDB.add_message(conv_id, role="user", content=request.message)
+        _db_uid = db_user["id"] if db_user else None
+        ConversationDB.add_message(conv_id, content=request.message, sender='user', user_id=_db_uid)
         
         # Get bot response (run sync function in thread to not block event loop)
         bot_response, history, usage = await asyncio.to_thread(
-            chat_with_claude, request.message, history, conv_id, user_memory, retrieved_context
+            chat_with_claude, request.message, history, conv_id,
+            user_memory, retrieved_context, effective_role, restricted_access
         )
 
-        # Save bot response to DB (with per-message cost)
+        # Save bot response to DB — user_id same as the user being served so history filters work
         ConversationDB.add_message(
-            conv_id, role="assistant", content=bot_response,
+            conv_id, content=bot_response, sender='bot',
             input_tokens=usage.get("input_tokens"),
             output_tokens=usage.get("output_tokens"),
             cost_usd=usage.get("cost_usd"),
+            user_id=_db_uid,
         )
         
         # Store conversation in memory (for backward compatibility)
         conversations[conv_id] = history
         
         # Trigger async memory update in background (non-blocking)
-        if request.user_id and should_summarize(history):
-            print(f"   🧠 Scheduling memory update for {request.user_id[:8]}...")
-            asyncio.create_task(update_user_memory_async(request.user_id, history))
+        # Use DB message count per user_id instead of in-memory history length
+        if _db_uid and should_summarize(_db_uid):
+            print(f"   🧠 Scheduling memory update for user_id={_db_uid}...")
+            asyncio.create_task(update_user_memory_async(str(_db_uid), history))
         
         from datetime import datetime
         print(f"   ✅ Chat response saved | {usage.get('input_tokens',0)}in+{usage.get('output_tokens',0)}out = ${usage.get('cost_usd',0):.5f}\n")
@@ -254,27 +285,54 @@ def get_conversation(conversation_id: str):
     
     return {"conversation_id": conversation_id, "history": formatted_history}
 
+@app.get("/messages/user/{user_id}")
+def get_messages_by_user(user_id: int, limit: int = 200):
+    """Return all messages (user + bot) for a given user_id, oldest first.
+    Also returns the latest conversation_id so the frontend can continue that conversation.
+    """
+    with get_db() as conn:
+        rows = conn.cursor().execute("""
+            SELECT sender, content, created_at, conversation_id
+            FROM messages
+            WHERE user_id = ?
+            ORDER BY created_at ASC
+            LIMIT ?
+        """, (user_id, limit)).fetchall()
+
+    if not rows:
+        return {"user_id": user_id, "conversation_id": None, "history": []}
+
+    history = [{"role": "user" if r["sender"] == "user" else "bot",
+                "content": r["content"], "created_at": r["created_at"]} for r in rows]
+    latest_conv = rows[-1]["conversation_id"]
+    return {"user_id": user_id, "conversation_id": latest_conv, "history": history}
+
 @app.get("/messages")
 def list_messages(page: int = 1, per_page: int = 20, role: str = None):
-    """List all messages with pagination, newest first. Optionally filter by role (user/assistant)."""
+    """List all messages with pagination, newest first. Optionally filter by role (user/assistant).
+    Role is derived: input_tokens IS NOT NULL → 'assistant', else → 'user'.
+    """
     offset = (page - 1) * per_page
+    if role == "assistant" or role == "bot":
+        where = "WHERE m.sender = 'bot'"
+    elif role == "user":
+        where = "WHERE m.sender = 'user'"
+    else:
+        where = ""
     with get_db() as conn:
         cursor = conn.cursor()
-        where = "WHERE m.role = ?" if role else ""
-        params_count = (role,) if role else ()
         total = cursor.execute(
-            f"SELECT COUNT(*) FROM messages m {where}", params_count
+            f"SELECT COUNT(*) FROM messages m {where}"
         ).fetchone()[0]
 
-        params = (role, per_page, offset) if role else (per_page, offset)
         rows = cursor.execute(f"""
-            SELECT m.id, m.role, m.content, m.input_tokens, m.output_tokens, m.cost_usd,
-                   m.created_at, m.conversation_id
+            SELECT m.id, m.sender, m.content, m.input_tokens, m.output_tokens, m.cost_usd,
+                   m.created_at, m.conversation_id, m.user_id
             FROM messages m
             {where}
             ORDER BY m.created_at DESC
             LIMIT ? OFFSET ?
-        """, params).fetchall()
+        """, (per_page, offset)).fetchall()
 
     return {
         "total": total,
@@ -334,20 +392,21 @@ def list_users():
 
 @app.post("/users", status_code=201)
 def create_user(req: CreateUserRequest):
-    user_id = str(uuid.uuid4())
     try:
         with get_db() as conn:
-            conn.cursor().execute(
-                "INSERT INTO users (id, username, display_name, role_id) VALUES (?,?,?,?)",
-                (user_id, req.username, req.display_name, req.role_id)
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO users (username, display_name, role_id) VALUES (?,?,?)",
+                (req.username, req.display_name, req.role_id)
             )
+            new_id = cur.lastrowid
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    return {"id": user_id, "username": req.username, "display_name": req.display_name, "role_id": req.role_id}
+    return {"id": new_id, "username": req.username, "display_name": req.display_name, "role_id": req.role_id}
 
 
 @app.put("/users/{user_id}")
-def update_user(user_id: str, req: UpdateUserRequest):
+def update_user(user_id: int, req: UpdateUserRequest):
     with get_db() as conn:
         cur = conn.cursor()
         user = cur.execute("SELECT id FROM users WHERE id=?", (user_id,)).fetchone()
@@ -363,7 +422,7 @@ def update_user(user_id: str, req: UpdateUserRequest):
 
 
 @app.delete("/users/{user_id}")
-def delete_user(user_id: str):
+def delete_user(user_id: int):
     with get_db() as conn:
         cur = conn.cursor()
         existing = cur.execute("SELECT id FROM users WHERE id=?", (user_id,)).fetchone()

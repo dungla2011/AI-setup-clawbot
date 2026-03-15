@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from anthropic import Anthropic
-from database import UsageStatsDB, ConversationDB, init_database
+from database import UsageStatsDB, ConversationDB, init_database, get_role_label
 from skills import TOOLS, process_tool_call
 
 # Debug: Print current working directory
@@ -61,20 +61,49 @@ print(f"🤖 Claude Model: {CLAUDE_MODEL}")
 print("="*60)
 
 # Main bot function
-def build_system_prompt(user_memory: str = "", retrieved_context: str = "") -> str:
+def build_system_prompt(user_memory: str = "", retrieved_context: str = "",
+                        user_role: str = "customer",
+                        restricted_access: bool = False) -> str:
     base = BASE_PROMPT
 
+    # Fetch display name from DB (roles.name) — no hardcoding
+    role_label = get_role_label(user_role)
+
+    # ── Role boundary (always injected — label comes from DB) ───────────
+    base += (
+        f"\n\n---\n## Vai trò hiện tại\n"
+        f"Bạn đang phục vụ người dùng với vai trò **{role_label}**. "
+        f"Chỉ cung cấp thông tin phù hợp với quyền hạn của vai trò này."
+    )
+
+    # ── Long-term memory ─────────────────────────────────────────────────
     if user_memory:
         base += f"\n\n---\n## Thông tin người dùng này (từ các cuộc trò chuyện trước)\n{user_memory}"
 
+    # ── RAG context ────────────────────────────────────────────────
     if retrieved_context:
-        base += f"\n\n---\n{retrieved_context}\n\nHãy trả lời CHỈ dựa trên tài liệu tham khảo ở trên. Nếu không tìm thấy thông tin, hãy nói rõ 'Tôi không tìm thấy thông tin này trong tài liệu.'"
+        base += (
+            f"\n\n---\n{retrieved_context}"
+            f"\n\nHãy trả lời CHỈ dựa trên tài liệu tham khảo ở trên. "
+            f"Nếu không tìm thấy thông tin, hãy nói rõ 'Tôi không tìm thấy thông tin này trong tài liệu.'"
+        )
+    elif restricted_access:
+        # Role has a limited category whitelist but no matching docs found—
+        # explicitly forbid Claude from answering from general knowledge or conversation history.
+        base += (
+            f"\n\n---\n## Không có tài liệu phù hợp\n"
+            f"Không có tài liệu nào trong phạm vi quyền hạn của vai trò **{role_label}** "
+            f"có liên quan đến câu hỏi này. "
+            f"TUYỆT ĐỐI KHÔNG trả lời dựa trên kiến thức chung, lịch sử trò chuyện, hay bất kỳ nguồn nào khác. "
+            f"Hãy trả lời: 'Xin lỗi, tôi không có thông tin này trong tài liệu dành cho {role_label}.'"
+        )
 
     return base
 
 
 def chat_with_claude(user_message, conversation_history=None, conversation_id=None,
-                     user_memory: str = "", retrieved_context: str = ""):
+                     user_memory: str = "", retrieved_context: str = "",
+                     user_role: str = "customer", restricted_access: bool = False):
     """
     Chat với Claude, tự động gọi tools khi cần
     """
@@ -88,7 +117,7 @@ def chat_with_claude(user_message, conversation_history=None, conversation_id=No
     })
     
     # System prompt with injected user memory
-    system_prompt = build_system_prompt(user_memory, retrieved_context)
+    system_prompt = build_system_prompt(user_memory, retrieved_context, user_role, restricted_access)
 
     # Accumulate token usage across all API calls (incl. tool-use rounds)
     _total_input = 0

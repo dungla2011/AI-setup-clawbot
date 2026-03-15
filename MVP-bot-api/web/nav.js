@@ -28,18 +28,31 @@
   let _users = [];        // cached user list
   let _currentUser = null;
 
-  const STORAGE_KEY = 'currentUserId';
+    const COOKIE_NAME = 'currentUserId';
+    const COOKIE_DAYS = 30;
 
-  function _saveUser(user) {
-    _currentUser = user;
-    if (user) {
-      localStorage.setItem(STORAGE_KEY, user.id);
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
+    function _setCookie(name, value, days) {
+      const expires = new Date(Date.now() + days * 864e5).toUTCString();
+      document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
     }
-    // Dispatch event so pages can react (e.g. index.html refreshes role)
-    window.dispatchEvent(new CustomEvent('navUserChanged', { detail: user }));
-  }
+    function _deleteCookie(name) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    }
+    function _getCookie(name) {
+      const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function _saveUser(user) {
+      _currentUser = user;
+      if (user) {
+        _setCookie(COOKIE_NAME, user.id, COOKIE_DAYS);
+      } else {
+        _deleteCookie(COOKIE_NAME);
+      }
+      // Dispatch event so pages can react (e.g. index.html refreshes role)
+      window.dispatchEvent(new CustomEvent('navUserChanged', { detail: user }));
+    }
 
   window.getCurrentUser     = () => _currentUser;
   window.getCurrentUserRole = () => (_currentUser && _currentUser.role_id) || 'customer';
@@ -96,12 +109,13 @@
           sel.appendChild(opt);
         });
 
-        // Restore from localStorage
-        const saved = localStorage.getItem(STORAGE_KEY);
+        // Restore from cookie (u.id is integer from DB, cookie is string → use ==)
+        const saved = _getCookie(COOKIE_NAME);
         if (saved) {
-          const found = _users.find(u => u.id === saved);
+          // eslint-disable-next-line eqeqeq
+          const found = _users.find(u => u.id == saved);
           if (found) {
-            sel.value = saved;
+            sel.value = found.id;
             _currentUser = found;
           }
         }
@@ -109,7 +123,8 @@
     }
 
     sel.addEventListener('change', () => {
-      const user = _users.find(u => u.id === sel.value) || null;
+      // sel.value is always a string; u.id is an integer from JSON — use == for comparison
+      const user = _users.find(u => u.id == sel.value) || null;
       _saveUser(user);
     });
 

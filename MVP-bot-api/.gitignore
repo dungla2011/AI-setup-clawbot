@@ -21,7 +21,7 @@ wheels/
 
 # RAG uploads & DB
 uploads/
-*.db
+# *.db
 .installed.cfg
 *.egg
 .vscode/

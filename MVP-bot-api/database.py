@@ -45,26 +45,28 @@ def init_database():
         """)
         
         # Messages table
+        # If old schema (missing 'sender' column) exists, drop and recreate
+        cursor.execute("PRAGMA table_info(messages)")
+        _msg_cols = [r["name"] for r in cursor.fetchall()]
+        if "role" in _msg_cols or "sender" not in _msg_cols:
+            cursor.execute("DROP TABLE IF EXISTS messages")
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id         INTEGER REFERENCES users(id),
                 conversation_id TEXT NOT NULL,
-                role TEXT NOT NULL,  -- 'user' or 'assistant'
-                content TEXT NOT NULL,
-                input_tokens  INTEGER,  -- NULL for user messages
-                output_tokens INTEGER,  -- NULL for user messages
-                cost_usd      REAL,     -- NULL for user messages
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                sender          TEXT NOT NULL DEFAULT 'user', -- 'user' | 'bot'
+                content         TEXT NOT NULL,
+                input_tokens    INTEGER,
+                output_tokens   INTEGER,
+                cost_usd        REAL,
+                created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id)
             )
         """)
-
-        # Migration: add cost columns to messages for existing DBs
-        for _col, _ctype in [("input_tokens", "INTEGER"), ("output_tokens", "INTEGER"), ("cost_usd", "REAL")]:
-            try:
-                cursor.execute(f"ALTER TABLE messages ADD COLUMN {_col} {_ctype}")
-            except Exception:
-                pass  # Column already exists — skip
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_user_id ON messages(user_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_messages_sender  ON messages(sender)")
         
         # Usage stats table
         cursor.execute("""
@@ -142,9 +144,16 @@ def init_database():
             )
         """)
 
+        # Migration: recreate users table if id column is still TEXT (old schema)
+        _cols = {r["name"]: r["type"] for r in
+                 cursor.execute("PRAGMA table_info(users)").fetchall()}
+        if _cols and _cols.get("id", "") != "INTEGER":
+            cursor.execute("DROP TABLE IF EXISTS users")
+            print("   ♻️  Dropped old users table (TEXT id → INTEGER AUTOINCREMENT migration)")
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id           TEXT PRIMARY KEY,
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
                 username     TEXT UNIQUE NOT NULL,
                 display_name TEXT NOT NULL,
                 role_id      TEXT NOT NULL REFERENCES roles(id),
@@ -196,13 +205,12 @@ def init_database():
         # Seed default users if empty
         cursor.execute("SELECT COUNT(*) as cnt FROM users")
         if cursor.fetchone()["cnt"] == 0:
-            import uuid as _uuid
             cursor.executemany(
-                "INSERT INTO users (id, username, display_name, role_id) VALUES (?,?,?,?)",
+                "INSERT INTO users (username, display_name, role_id) VALUES (?,?,?)",
                 [
-                    (str(_uuid.uuid4()), "customer01", "Nguyễn Khách",    "customer"),
-                    (str(_uuid.uuid4()), "staff01",    "Trần Nhân Viên",  "staff"),
-                    (str(_uuid.uuid4()), "admin01",    "Lê Quản Trị",     "admin"),
+                    ("customer01", "Nguyễn Khách",    "customer"),
+                    ("staff01",    "Trần Nhân Viên",  "staff"),
+                    ("admin01",    "Lê Quản Trị",     "admin"),
                 ]
             )
             print("   🌱 Seeded default users")
@@ -275,11 +283,16 @@ class ConversationDB:
             """, (conversation_id, platform, user_id))
     
     @staticmethod
-    def add_message(conversation_id: str, role: str, content: str,
+    def add_message(conversation_id: str, content: str,
+                    sender: str = 'user',
                     input_tokens: Optional[int] = None,
                     output_tokens: Optional[int] = None,
-                    cost_usd: Optional[float] = None):
-        """Add message to conversation. Pass token/cost params for assistant messages."""
+                    cost_usd: Optional[float] = None,
+                    user_id: Optional[int] = None):
+        """Add message to conversation.
+        sender: 'user' for human messages, 'bot' for assistant replies.
+        user_id should be set for BOTH user and bot turns (so history filters work by user).
+        """
         with get_db() as conn:
             cursor = conn.cursor()
             # Update conversation timestamp
@@ -291,17 +304,20 @@ class ConversationDB:
 
             # Insert message
             cursor.execute("""
-                INSERT INTO messages (conversation_id, role, content, input_tokens, output_tokens, cost_usd)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (conversation_id, role, content, input_tokens, output_tokens, cost_usd))
+                INSERT INTO messages (user_id, conversation_id, sender, content, input_tokens, output_tokens, cost_usd)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (user_id, conversation_id, sender, content, input_tokens, output_tokens, cost_usd))
     
     @staticmethod
     def get_conversation_history(conversation_id: str, limit: int = 50) -> List[Dict[str, Any]]:
-        """Get conversation history"""
+        """Get conversation history. sender='bot' is mapped to 'assistant' for Claude."""
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT role, content, created_at
+                SELECT
+                    CASE WHEN sender = 'bot' THEN 'assistant' ELSE 'user' END AS role,
+                    content,
+                    created_at
                 FROM messages
                 WHERE conversation_id = ?
                 ORDER BY created_at ASC
@@ -362,7 +378,55 @@ class UserMemoryDB:
                     memory = excluded.memory,
                     updated_at = CURRENT_TIMESTAMP
             """, (user_id, memory))
-        print(f"🧠 Memory updated for user: {user_id[:8]}...")
+        print(f"🧠 Memory updated for user: {user_id[:8] if isinstance(user_id, str) else user_id}...")
+
+    @staticmethod
+    def count_user_messages(user_id: int) -> int:
+        """Count messages sent by this user (sender='user' turns only)."""
+        try:
+            with get_db() as conn:
+                row = conn.cursor().execute(
+                    "SELECT COUNT(*) as cnt FROM messages WHERE user_id=? AND sender='user'",
+                    (user_id,)
+                ).fetchone()
+            return row["cnt"] if row else 0
+        except Exception:
+            return 0
+
+
+# ── Standalone helpers (no class needed) ─────────────────────────────────────
+
+def get_role_label(role_id: str) -> str:
+    """Fetch role display name from the roles table. Falls back to role_id if missing."""
+    try:
+        with get_db() as conn:
+            row = conn.cursor().execute(
+                "SELECT name FROM roles WHERE id=?", (role_id,)
+            ).fetchone()
+        return row["name"] if row else role_id
+    except Exception:
+        return role_id
+
+
+def get_user_by_id(user_id) -> Optional[Dict[str, Any]]:
+    """
+    Look up a user from the users table by INTEGER id.
+    Accepts int or string representation of int.
+    Returns dict with id, username, display_name, role_id, is_active — or None.
+    """
+    try:
+        uid = int(user_id)
+    except (ValueError, TypeError):
+        return None
+    try:
+        with get_db() as conn:
+            row = conn.cursor().execute(
+                "SELECT id, username, display_name, role_id, is_active FROM users WHERE id=?",
+                (uid,)
+            ).fetchone()
+        return dict(row) if row else None
+    except Exception:
+        return None
 
 
 class OrdersDB:

@@ -43,7 +43,8 @@
 
   <!-- Input Area -->
   <div class="input-area">
-    <select id="roleSelect" title="User role" style="border:none;background:#f0f0f0;border-radius:6px;padding:4px 8px;font-size:.8rem;color:#555;cursor:pointer;flex-shrink:0">
+    <select id="roleSelect" title="Role hiện tại (chọn user ở menu trên)" disabled
+      style="border:none;background:#e8eaf0;border-radius:6px;padding:4px 8px;font-size:.8rem;color:#555;flex-shrink:0;opacity:1;cursor:default;">
       <option value="customer">👤 Customer</option>
       <option value="staff">🛡️ Staff</option>
       <option value="admin">⚙️ Admin</option>
@@ -63,15 +64,11 @@
 
     let conversationId = null;
 
-    // Persistent user ID — survives across conversations, stored in browser
-    const userId = (() => {
-      let id = localStorage.getItem('botUserId');
-      if (!id) {
-        id = 'u-' + crypto.randomUUID();
-        localStorage.setItem('botUserId', id);
-      }
-      return id;
-    })();
+    // Returns the DB user id (integer) from nav dropdown, or null if none selected.
+    function getEffectiveUserId() {
+      const navUser = window.getCurrentUser && window.getCurrentUser();
+      return navUser ? navUser.id : null;
+    }
 
     const messageInput = document.getElementById("messageInput");
     const sendBtn      = document.getElementById("sendBtn");
@@ -132,11 +129,10 @@
       const loadingId = "loading-" + Date.now();
       addLoading(loadingId);
       try {
-        const userRole = (window.getCurrentUserRole && window.getCurrentUserRole()) || document.getElementById('roleSelect').value;
         const response = await fetch(`${API_URL}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, conversation_id: conversationId, user_id: userId, user_role: userRole }),
+          body: JSON.stringify({ message, conversation_id: conversationId, user_id: getEffectiveUserId() }),
         });
         if (!response.ok) throw new Error(`API error: ${response.status}`);
         const data = await response.json();
@@ -159,6 +155,29 @@
     }
 
     async function loadConversationHistory() {
+      const uid = getEffectiveUserId();
+
+      if (uid) {
+        // Load all messages for this user (user_id-based, most reliable)
+        try {
+          const res = await fetch(`${API_URL}/messages/user/${uid}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.conversation_id) {
+              conversationId = data.conversation_id;
+              convIdSpan.textContent = conversationId.substring(0, 8) + "...";
+              localStorage.setItem('lastConversationId', conversationId);
+              window.history.replaceState({}, '', `?conv_id=${conversationId}`);
+            }
+            if (data.history && data.history.length > 0) {
+              data.history.forEach(msg => addMessage(msg.content, msg.role === 'bot' ? 'bot' : 'user', msg.created_at));
+            }
+          }
+        } catch(e) {}
+        return;
+      }
+
+      // Fallback: no user selected — try conv_id from URL/localStorage
       const urlParams = new URLSearchParams(window.location.search);
       let savedConvId = urlParams.get('conv_id') || localStorage.getItem('lastConversationId');
       if (!savedConvId) {
@@ -222,25 +241,30 @@
 
     window.addEventListener("load", () => {
       document.getElementById('welcomeTime').textContent = fmtTime();
-      // Restore saved role
+      // Set initial role display from localStorage
       const savedRole = localStorage.getItem('chatUserRole');
       if (savedRole) document.getElementById('roleSelect').value = savedRole;
-      document.getElementById('roleSelect').onchange = function() {
-        localStorage.setItem('chatUserRole', this.value);
-      };
+      // (no onchange — roleSelect is readonly, driven by nav user dropdown)
       loadConversationHistory();
       updateUsageStats();
       checkApiHealth();
       messageInput.focus();
 
-      // Sync roleSelect when nav user changes
+      // Sync roleSelect + reload history when nav user changes
       window.addEventListener('navUserChanged', (e) => {
         const user = e.detail;
         const roleSelect = document.getElementById('roleSelect');
-        if (user && roleSelect) {
+        if (user) {
           roleSelect.value = user.role_id;
           localStorage.setItem('chatUserRole', user.role_id);
+        } else {
+          roleSelect.value = 'customer';
+          localStorage.setItem('chatUserRole', 'customer');
         }
+        // Reload chat history for the newly selected user
+        conversationId = null;
+        messagesDiv.innerHTML = '';
+        loadConversationHistory();
       });
     });
   </script>

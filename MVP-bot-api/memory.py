@@ -17,7 +17,7 @@ from typing import Optional
 from pathlib import Path
 from dotenv import load_dotenv
 from anthropic import Anthropic
-from database import UserMemoryDB, UsageStatsDB
+from database import UserMemoryDB, UsageStatsDB, get_db
 
 load_dotenv(dotenv_path=Path(__file__).parent / '.env', override=True)
 
@@ -25,7 +25,7 @@ load_dotenv(dotenv_path=Path(__file__).parent / '.env', override=True)
 SUMMARIZE_MODEL = os.getenv("MEMORY_MODEL", "claude-3-haiku-20240307")
 
 # Trigger summarize after this many messages in conversation (user+bot = 2 per turn)
-SUMMARIZE_EVERY = 12   # = 6 turns
+SUMMARIZE_EVERY = 6   # trigger every 6 user turns
 
 _client: Optional[Anthropic] = None
 
@@ -131,13 +131,29 @@ async def update_user_memory_async(user_id: str, conversation: list[dict]) -> No
     await asyncio.to_thread(_do_summarize, user_id, conversation)
 
 
-def should_summarize(conversation: list[dict]) -> bool:
+def should_summarize(user_id: int) -> bool:
     """
-    Return True when it's time to update memory.
-    Triggers every SUMMARIZE_EVERY messages (= every N turns).
+    Return True when it's time to update memory for this user.
+    Triggers at every SUMMARIZE_EVERY user messages (6, 12, 18...).
+    Also triggers once as catch-up if count >= SUMMARIZE_EVERY but no memory saved yet.
     """
-    msg_count = sum(
-        1 for m in conversation
-        if isinstance(m.get("content"), str)   # skip tool blocks
-    )
-    return msg_count > 0 and msg_count % SUMMARIZE_EVERY == 0
+    try:
+        with get_db() as conn:
+            cur = conn.cursor()
+            row = cur.execute(
+                "SELECT COUNT(*) as cnt FROM messages WHERE user_id=? AND sender='user'",
+                (user_id,)
+            ).fetchone()
+            cnt = row["cnt"] if row else 0
+            if cnt < SUMMARIZE_EVERY:
+                return False
+            # Normal trigger: exact multiple
+            if cnt % SUMMARIZE_EVERY == 0:
+                return True
+            # Catch-up: past threshold but no memory saved yet
+            has_memory = cur.execute(
+                "SELECT 1 FROM user_memory WHERE user_id=?", (str(user_id),)
+            ).fetchone()
+            return has_memory is None
+    except Exception:
+        return False

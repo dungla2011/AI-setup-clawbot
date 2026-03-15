@@ -324,3 +324,209 @@ pip install tiktoken       # đếm token để chunk chính xác
 3. **Ai upload tài liệu?** Chỉ admin qua Swagger, hay cần UI upload riêng?
 4. **Chunk size:** 300–500 tokens? (ngắn = chính xác hơn, dài = context đủ)
 5. **Khi không có doc liên quan:** bot fallback sang general knowledge hay nói "không biết"?
+
+---
+
+## 13. Phân quyền đầy đủ — User / Role / Category (đã implement)
+
+> Thay thế hoàn toàn phần 3.3 (hardcoded dict). Mọi thứ đều đọc từ DB.
+
+### 13.1 Ba bảng mới trong `database.py`
+
+```sql
+-- Bảng roles: danh sách vai trò, tên lấy từ đây (không hardcode)
+CREATE TABLE IF NOT EXISTS roles (
+    id          TEXT PRIMARY KEY,   -- "customer", "staff", "admin"
+    name        TEXT NOT NULL,      -- "Khách hàng", "Nhân viên", "Quản trị"
+    description TEXT,
+    created_at  TEXT DEFAULT (datetime('now'))
+);
+
+-- Bảng users: mỗi người dùng có 1 role và 1 UUID cố định
+CREATE TABLE IF NOT EXISTS users (
+    id           TEXT PRIMARY KEY,          -- UUID, dùng làm user_id qua API
+    username     TEXT UNIQUE NOT NULL,
+    display_name TEXT NOT NULL,
+    role_id      TEXT NOT NULL REFERENCES roles(id),
+    is_active    INTEGER DEFAULT 1,
+    created_at   TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX idx_users_role ON users(role_id);
+
+-- Bảng role_category_access: ma trận role ↔ category, thay cho hardcoded dict
+CREATE TABLE IF NOT EXISTS role_category_access (
+    role_id     TEXT NOT NULL REFERENCES roles(id),
+    category_id TEXT NOT NULL REFERENCES doc_categories(id),
+    PRIMARY KEY (role_id, category_id)
+);
+```
+
+**Seed mặc định khi DB mới:**
+- Roles: `customer` / `staff` / `admin`
+- Users: `customer01` / `staff01` / `admin01` (1 user/role)
+- `customer` → `customer_guide`, `product_faq`
+- `staff`, `admin` → tất cả 6 categories
+
+### 13.2 `rag.py` — `get_allowed_categories()` đọc từ DB
+
+Trước đây là hardcoded `CATEGORY_ACCESS` dict. Nay:
+
+```python
+def get_allowed_categories(user_role: str) -> Optional[list[str]]:
+    rows = SELECT category_id FROM role_category_access WHERE role_id = ?
+
+    if not rows:
+        return []    # role không có quyền gì → chặn hoàn toàn
+
+    allowed = [r["category_id"] for r in rows]
+
+    total_cats = SELECT COUNT(*) FROM doc_categories
+    if len(allowed) >= total_cats:
+        return None  # None = unrestricted (all categories — không filter)
+
+    return allowed   # list cụ thể → WHERE category_id IN (...)
+```
+
+→ Thêm category mới, thay đổi quyền → chỉ cần sửa DB, không đụng code.
+
+### 13.3 `api.py` — Resolve role từ DB, không tin frontend
+
+```python
+# Bước 1: Lấy role từ DB nếu user_id khớp users.id
+db_user = get_user_by_id(request.user_id)   # helper mới trong database.py
+effective_role = db_user["role_id"] if db_user else request.user_role or "customer"
+
+# Bước 2: Kiểm tra role có bị giới hạn category không
+allowed = get_allowed_categories(effective_role)
+restricted_access = (allowed is not None)   # True nếu có whitelist cụ thể
+
+# Bước 3: RAG dùng effective_role (đã được DB verify)
+chunks = rag_retrieve(message, effective_role, ...)
+```
+
+**Tại sao quan trọng:** Frontend có thể gửi `user_role: "admin"` bừa — nếu `user_id` khớp 1 user trong `users` table thì dùng `role_id` của row đó, bỏ qua field frontend gửi lên.
+
+### 13.4 `bot.py` — `restricted_access` flag ngăn Claude trả tự do
+
+Vấn đề gốc: RAG trả 0 chunk → `retrieved_context = ""` → không có instruction nào → Claude dùng general knowledge trả lời thoải mái.
+
+Giải pháp: thêm param `restricted_access: bool` vào `build_system_prompt()`:
+
+```python
+def build_system_prompt(user_memory, retrieved_context,
+                        user_role, restricted_access=False):
+    ...
+    if retrieved_context:
+        # Có doc → "CHỈ dựa trên tài liệu"
+        base += "=== Tài liệu tham khảo ===\n" + retrieved_context
+        base += "\nHãy trả lời CHỈ dựa trên tài liệu tham khảo ở trên."
+
+    elif restricted_access:
+        # Không có doc PHÙ HỢP với role này → từ chối, không dùng kiến thức chung
+        base += (
+            "Không có tài liệu nào trong phạm vi quyền hạn của vai trò này "
+            "có liên quan đến câu hỏi này. "
+            "TUYỆT ĐỐI KHÔNG trả lời dựa trên kiến thức chung, lịch sử trò chuyện, "
+            "hay bất kỳ nguồn nào khác. "
+            "Hãy trả lời: 'Xin lỗi, tôi không có thông tin này trong tài liệu dành cho [role].'"
+        )
+    # else: unrestricted role + 0 chunk → Claude tự trả lời bình thường
+```
+
+**Ba trường hợp:**
+
+| retrieved_context | restricted_access | Hành vi Claude |
+|---|---|---|
+| Có chunks | bất kỳ | Trả lời CHỈ dựa trên tài liệu |
+| Không có | `True` (whitelist) | Từ chối, báo "không có trong tài liệu dành cho \[role\]" |
+| Không có | `False` (unrestricted) | Trả lời tự do từ general knowledge |
+
+### 13.5 `role_label` lấy từ DB (`roles.name`)
+
+```python
+# database.py — helper mới
+def get_role_label(role_id: str) -> str:
+    row = SELECT name FROM roles WHERE id = ?
+    return row["name"] if row else role_id
+
+# bot.py dùng
+role_label = get_role_label(user_role)   # "Khách hàng", "Nhân viên"...
+# Không còn _ROLE_LABELS dict hardcode
+```
+
+### 13.6 Frontend — `user_id` dùng `users.id` thật từ nav dropdown
+
+```javascript
+// nav.js: user dropdown top-right
+// Khi chọn user → lưu users.id vào localStorage
+window.getCurrentUser = () => _currentUser      // { id, username, role_id, ... }
+window.getCurrentUserRole = () => _currentUser?.role_id || "customer"
+
+// index.html: dùng users.id khi có (thay vì browser-generated UUID)
+function getEffectiveUserId() {
+    const navUser = window.getCurrentUser && window.getCurrentUser();
+    return navUser ? navUser.id : browserUserId;   // fallback: localStorage UUID
+}
+
+// Gửi lên API:
+{ user_id: getEffectiveUserId(), user_role: getCurrentUserRole() }
+// → api.py tìm user_id trong users table → lấy role_id từ DB
+```
+
+`roleSelect` trong chat UI: **disabled** (readonly), tự động sync khi `navUserChanged` event fire.
+
+### 13.7 `settings.html` — UI quản lý Users / Roles / Permissions
+
+Trang mới với 3 tab Bootstrap:
+
+| Tab | Nội dung |
+|---|---|
+| **Users** | Bảng list users + Add/Edit/Delete (modal) |
+| **Roles** | Bảng list roles + Add/Edit/Delete |
+| **Permissions** | Matrix checkbox: rows=Roles, cols=Categories → PUT /roles/{id}/categories |
+
+**API endpoints mới trong `api.py`:**
+
+```
+GET    /users
+POST   /users                    { username, display_name, role_id }
+PUT    /users/{id}               { display_name?, role_id?, is_active? }
+DELETE /users/{id}
+
+GET    /roles
+POST   /roles                    { id, name, description }
+PUT    /roles/{id}               { name?, description? }
+DELETE /roles/{id}               (lỗi nếu còn user dùng role này)
+
+GET    /roles/{id}/categories    → list category_id
+PUT    /roles/{id}/categories    { category_ids: [...] }  → replace toàn bộ
+
+GET    /categories               → list doc_categories
+```
+
+### 13.8 Luồng đầy đủ khi chat (sau khi triển khai)
+
+```
+1. User chọn "customer01" trên nav dropdown
+   → getCurrentUser() = { id: "0460b8eb-...", role_id: "customer" }
+
+2. POST /chat { user_id: "0460b8eb-...", user_role: "customer", message: "..." }
+
+3. api.py:
+   get_user_by_id("0460b8eb-...") → { role_id: "customer" }  ← trust DB
+   effective_role = "customer"
+
+   get_allowed_categories("customer")
+   → SELECT ... FROM role_category_access WHERE role_id="customer"
+   → ["customer_guide", "product_faq"]
+   → restricted_access = True  (whitelist != None)
+
+   rag_retrieve(query, "customer") → 0 chunks (không có doc phù hợp)
+
+4. build_system_prompt(retrieved_context="", restricted_access=True)
+   → inject "TUYỆT ĐỐI KHÔNG trả lời từ kiến thức chung..."
+
+5. Claude trả lời:
+   "Xin lỗi, tôi không có thông tin này trong tài liệu dành cho Khách hàng."
+```
+
