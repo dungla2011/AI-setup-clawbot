@@ -211,7 +211,7 @@ async def chat(request: ChatRequest):
             print(f"   🧠 Scheduling memory update for user_id={_db_uid}...")
             asyncio.create_task(update_user_memory_async(str(_db_uid), history))
         
-        from datetime import datetime
+        from utils import now_local
         print(f"   ✅ Chat response saved | {usage.get('input_tokens',0)}in+{usage.get('output_tokens',0)}out = ${usage.get('cost_usd',0):.5f}\n")
         return ChatResponse(
             conversation_id=conv_id,
@@ -220,7 +220,7 @@ async def chat(request: ChatRequest):
             input_tokens=usage.get("input_tokens"),
             output_tokens=usage.get("output_tokens"),
             cost_usd=usage.get("cost_usd"),
-            timestamp=datetime.now().isoformat()
+            timestamp=now_local().isoformat()
         )
     
     except Exception as e:

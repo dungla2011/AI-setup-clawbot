@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 from contextlib import contextmanager
 import json
+from utils import now_local_str, TZ_SQL
 
 DB_PATH = "bot_data.db"
 
@@ -298,9 +299,9 @@ class ConversationDB:
             # Update conversation timestamp
             cursor.execute("""
                 UPDATE conversations 
-                SET updated_at = CURRENT_TIMESTAMP 
+                SET updated_at = ?
                 WHERE conversation_id = ?
-            """, (conversation_id,))
+            """, (now_local_str(), conversation_id))
 
             # Insert message
             cursor.execute("""
@@ -373,11 +374,11 @@ class UserMemoryDB:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO user_memory (user_id, memory, updated_at)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
+                VALUES (?, ?, ?)
                 ON CONFLICT(user_id) DO UPDATE SET
                     memory = excluded.memory,
-                    updated_at = CURRENT_TIMESTAMP
-            """, (user_id, memory))
+                    updated_at = excluded.updated_at
+            """, (user_id, memory, now_local_str()))
         print(f"🧠 Memory updated for user: {user_id[:8] if isinstance(user_id, str) else user_id}...")
 
     @staticmethod
@@ -465,9 +466,9 @@ class OrdersDB:
         period: 'today' | 'week' | 'month'
         """
         period_filter = {
-            "today": "DATE(created_at) = DATE('now')",
-            "week":  "created_at >= DATE('now', '-7 days')",
-            "month": "created_at >= DATE('now', '-30 days')",
+            "today": f"DATE(created_at) = DATE(datetime('now', '{TZ_SQL}'))",
+            "week":  f"created_at >= DATE(datetime('now', '{TZ_SQL}'), '-7 days')",
+            "month": f"created_at >= DATE(datetime('now', '{TZ_SQL}'), '-30 days')",
         }.get(period, "1=1")
 
         with get_db() as conn:
