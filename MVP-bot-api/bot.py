@@ -61,16 +61,20 @@ print(f"🤖 Claude Model: {CLAUDE_MODEL}")
 print("="*60)
 
 # Main bot function
-def build_system_prompt(user_memory: str = "") -> str:
+def build_system_prompt(user_memory: str = "", retrieved_context: str = "") -> str:
     base = BASE_PROMPT
 
     if user_memory:
         base += f"\n\n---\n## Thông tin người dùng này (từ các cuộc trò chuyện trước)\n{user_memory}"
 
+    if retrieved_context:
+        base += f"\n\n---\n{retrieved_context}\n\nHãy trả lời CHỈ dựa trên tài liệu tham khảo ở trên. Nếu không tìm thấy thông tin, hãy nói rõ 'Tôi không tìm thấy thông tin này trong tài liệu.'"
+
     return base
 
 
-def chat_with_claude(user_message, conversation_history=None, conversation_id=None, user_memory: str = ""):
+def chat_with_claude(user_message, conversation_history=None, conversation_id=None,
+                     user_memory: str = "", retrieved_context: str = ""):
     """
     Chat với Claude, tự động gọi tools khi cần
     """
@@ -84,7 +88,7 @@ def chat_with_claude(user_message, conversation_history=None, conversation_id=No
     })
     
     # System prompt with injected user memory
-    system_prompt = build_system_prompt(user_memory)
+    system_prompt = build_system_prompt(user_memory, retrieved_context)
 
     # Accumulate token usage across all API calls (incl. tool-use rounds)
     _total_input = 0

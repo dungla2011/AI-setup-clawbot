@@ -18,6 +18,10 @@ sdist/
 var/
 wheels/
 *.egg-info/
+
+# RAG uploads & DB
+uploads/
+*.db
 .installed.cfg
 *.egg
 .vscode/

@@ -89,6 +89,66 @@ def init_database():
             )
         """)
 
+        # ── RAG Document tables ───────────────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS doc_categories (
+                id          TEXT PRIMARY KEY,
+                name        TEXT NOT NULL,
+                is_public   INTEGER DEFAULT 0,  -- 1=all users, 0=staff+admin only
+                description TEXT,
+                created_at  TEXT DEFAULT (datetime('now'))
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS documents (
+                id                TEXT PRIMARY KEY,
+                category_id       TEXT REFERENCES doc_categories(id),
+                filename          TEXT NOT NULL,      -- stored on disk (uuid+ext)
+                original_filename TEXT,               -- original uploaded name
+                file_type         TEXT,               -- pdf, docx, txt, md
+                file_size         INTEGER,
+                description       TEXT,
+                total_chunks      INTEGER DEFAULT 0,
+                uploaded_by       TEXT,
+                is_active         INTEGER DEFAULT 1,
+                created_at        TEXT DEFAULT (datetime('now'))
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS doc_chunks (
+                id          TEXT PRIMARY KEY,
+                doc_id      TEXT REFERENCES documents(id),
+                category_id TEXT,                    -- denorm for fast filter
+                chunk_index INTEGER,
+                content     TEXT NOT NULL,
+                page_num    INTEGER,
+                token_count INTEGER,
+                embedding   BLOB,                    -- float32 bytes
+                created_at  TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_category ON doc_chunks(category_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chunks_doc ON doc_chunks(doc_id)")
+
+        # Seed default categories if empty
+        cursor.execute("SELECT COUNT(*) as cnt FROM doc_categories")
+        if cursor.fetchone()["cnt"] == 0:
+            default_cats = [
+                ("customer_guide",   "Hướng dẫn khách hàng",  1, "Tài liệu hướng dẫn dành cho khách hàng"),
+                ("product_faq",      "FAQ Sản phẩm",           1, "Câu hỏi thường gặp về sản phẩm/dịch vụ"),
+                ("internal_policy",  "Nội quy nội bộ",         0, "Quy định, chính sách nội bộ doanh nghiệp"),
+                ("internal_pricing", "Bảng giá nội bộ",        0, "Bảng giá chi phí, chiết khấu nội bộ"),
+                ("hr_handbook",      "Quy chế nhân sự",        0, "Hợp đồng, nghỉ phép, lương thưởng..."),
+                ("training",         "Tài liệu đào tạo",       0, "Tài liệu onboard, training nhân viên"),
+            ]
+            cursor.executemany(
+                "INSERT INTO doc_categories (id, name, is_public, description) VALUES (?,?,?,?)",
+                default_cats
+            )
+            print("   🌱 Seeded default doc categories")
+
         # Orders table (mock data — replace with real API source later)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS orders (

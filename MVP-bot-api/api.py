@@ -34,6 +34,8 @@ import uuid
 from bot import chat_with_claude
 from database import UsageStatsDB, ConversationDB, UserMemoryDB, init_database
 from memory import update_user_memory_async, should_summarize
+from docs_api import router as docs_router
+from rag import retrieve as rag_retrieve, format_context
 
 app = FastAPI(title="Bot MVP API", version="1.0")
 
@@ -59,6 +61,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(LoggingMiddleware)
 
+# Include routers
+app.include_router(docs_router)
+
 # Store conversations in memory (in production use database)
 conversations = {}
 
@@ -69,7 +74,9 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     conversation_id: Optional[str] = None
-    user_id: Optional[str] = None   # persistent ID from frontend localStorage
+    user_id: Optional[str] = None        # persistent ID from frontend localStorage
+    user_role: Optional[str] = "customer" # customer | staff | admin
+    category_hint: Optional[str] = None   # which doc category to search (optional)
 
 class ChatResponse(BaseModel):
     conversation_id: str
@@ -130,13 +137,29 @@ async def chat(request: ChatRequest):
             user_memory = UserMemoryDB.get_memory(request.user_id) or ""
             if user_memory:
                 print(f"   🧠 Loaded memory ({len(user_memory)} chars) for {request.user_id[:8]}...")
+
+        # RAG: retrieve relevant document chunks (based on user role + optional category)
+        retrieved_context = ""
+        try:
+            chunks = await asyncio.to_thread(
+                rag_retrieve, request.message,
+                request.user_role or "customer",
+                5,   # top_k
+                0.30, # min_score
+                request.category_hint,
+            )
+            if chunks:
+                retrieved_context = format_context(chunks)
+                print(f"   📚 RAG: {len(chunks)} chunks retrieved (top score: {chunks[0]['score']})")
+        except Exception as e:
+            print(f"   ⚠️ RAG retrieval failed (non-blocking): {e}")
         
         # Save user message to DB
         ConversationDB.add_message(conv_id, role="user", content=request.message)
         
         # Get bot response (run sync function in thread to not block event loop)
         bot_response, history, usage = await asyncio.to_thread(
-            chat_with_claude, request.message, history, conv_id, user_memory
+            chat_with_claude, request.message, history, conv_id, user_memory, retrieved_context
         )
 
         # Save bot response to DB (with per-message cost)

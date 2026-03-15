@@ -17,6 +17,7 @@
     { key: 'chat',  href: 'index.html', icon: '&#x1F4AC;', label: 'Chat' },
     { key: 'stats', href: 'stats.html', icon: '&#x1F4CA;', label: 'Thống kê' },
     { key: 'docs',  href: 'docs.html',  icon: '&#x1F4D6;', label: 'API Docs' },
+    { key: 'admin', href: 'admin.html', icon: '&#x1F4C1;', label: 'Admin' },
   ];
 
   window.initNav = function (apiUrl) {
